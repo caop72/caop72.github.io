@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Jornada de Digitalización - Reserva Militar</title>
+    <title>Jornada de Digitalización - Reserva Militar del Ejército Bolivariano</title>
     <style>
         * {
             margin: 0;
@@ -315,7 +315,7 @@
         <div id="pantallaPresentacion" class="access-cards">
             <div class="card card-analista" onclick="mostrarPanel('analista')">
                 <h2>📱 ANALISTA</h2>
-                <p>Registra tu digitalización diaria</p>
+                <p>Registre su digitalización diaria</p>
                 <button>Ingresar</button>
             </div>
             <div class="card card-operador" onclick="mostrarPanel('operador')">
@@ -369,10 +369,8 @@
             </div>
             <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px;">
                 <strong>📌 Instrucciones:</strong><br>
-                • Registra solo TU trabajo de hoy<br>
+                • Registre solo su trabajo de hoy<br>
                 • Ingresa tu número de cédula para identificación<br>
-                • Si dos analistas de la misma unidad registran, ambos aparecen por separado<br>
-                • El total de la unidad se suma automáticamente en el acumulado<br>
                 • Si tu unidad no está en la lista, escríbela en "nueva unidad"
             </div>
         </div>
@@ -426,7 +424,7 @@
                 </div>
 
                 <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">
-                    📄 GENERAR INFORME PARA EL JEFE
+                    📄 GENERAR INFORME PARA EL COMANDO SUPERIOR
                 </button>
             </div>
         </div>
@@ -434,7 +432,7 @@
 
     <script>
         // ========== CONFIGURACIÓN ==========
-        const CLAVE_OPERADOR = "registro2026**";
+        const CLAVE_OPERADOR = "r2026";
         
         // LISTA EXACTA DE 33 UNIDADES (según lo solicitado)
         const UNIDADES_PREDETERMINADAS = [
