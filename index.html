@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Jornada de Digitalización - Reserva Militar del Ejército Bolivariano</title>
+    <title>Jornada de Digitalización - Reserva Militar</title>
     <style>
         * {
             margin: 0;
@@ -282,15 +282,6 @@
             font-size: 14px;
         }
 
-        .badge-analista {
-            background: #e9ecef;
-            border-radius: 12px;
-            padding: 2px 8px;
-            font-size: 11px;
-            color: #495057;
-            display: inline-block;
-        }
-
         @media (max-width: 480px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -315,7 +306,7 @@
         <div id="pantallaPresentacion" class="access-cards">
             <div class="card card-analista" onclick="mostrarPanel('analista')">
                 <h2>📱 ANALISTA</h2>
-                <p>Registre su digitalización diaria</p>
+                <p>Registra tu digitalización diaria</p>
                 <button>Ingresar</button>
             </div>
             <div class="card card-operador" onclick="mostrarPanel('operador')">
@@ -353,7 +344,7 @@
                     </div>
                     <div class="form-group">
                         <label>📖 Libro/Año asignado:</label>
-                        <input type="text" id="libroAnalista" placeholder="Ej: 1983" required>
+                        <input type="text" id="libroAnalista" placeholder="Ej: OCT 1983" required>
                     </div>
                     <div class="form-group">
                         <label>🔢 Cédulas digitalizadas HOY:</label>
@@ -369,9 +360,11 @@
             </div>
             <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px;">
                 <strong>📌 Instrucciones:</strong><br>
-                • Registre solo su trabajo de hoy<br>
-                • Sólo debes realizar un reporte diario, una vez finalizada la jornada<br>
-                • Si tienes algún inconveniente, comuniquese directamente con el Cnel. César A. Ontivero Pérez
+                • Registra solo TU trabajo de hoy<br>
+                • Ingresa tu número de cédula para identificación<br>
+                • Si dos analistas de la misma unidad registran, ambos aparecen por separado<br>
+                • El total de la unidad se suma automáticamente en el acumulado<br>
+                • Si tu unidad no está en la lista, escríbela en "nueva unidad"
             </div>
         </div>
 
@@ -424,7 +417,7 @@
                 </div>
 
                 <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">
-                    📄 GENERAR INFORME PARA EL COMANDO SUPERIOR
+                    📄 GENERAR INFORME PARA EL JEFE
                 </button>
             </div>
         </div>
@@ -432,9 +425,9 @@
 
     <script>
         // ========== CONFIGURACIÓN ==========
-        const CLAVE_OPERADOR = "r2026";
+        const CLAVE_OPERADOR = "registro2026**";
         
-        // LISTA EXACTA DE 33 UNIDADES (según lo solicitado)
+        // LISTA EXACTA DE 33 UNIDADES (CORREGIDA - SOLO LAS QUE INDICASTE)
         const UNIDADES_PREDETERMINADAS = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
             "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
@@ -450,7 +443,7 @@
         // REGISTROS VÍRGENES (sin datos de ejemplo)
         let registros = JSON.parse(localStorage.getItem('digitalizacion_registros')) || [];
         
-        // Si no hay registros, empezar con array vacío (sin datos de ejemplo)
+        // Si no hay registros, empezar con array vacío
         if(registros.length === 0) {
             registros = [];
             localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
@@ -527,7 +520,7 @@
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) {
-                    tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
+                    tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td><tr>';
                 } else {
                     tbodyHoy.innerHTML = registrosHoy.map((r, index) => `
                         <tr>
@@ -546,7 +539,7 @@
             if(tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
                 if(unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td></tr>';
+                    tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td><tr>';
                 } else {
                     tbodyAcum.innerHTML = unidades.map(u => `
                         <tr>
@@ -559,7 +552,7 @@
             }
         }
         
-        // Eliminar registro por índice (más preciso)
+        // Eliminar registro por índice
         window.eliminarRegistro = function(index) {
             const registro = registros[index];
             if(registro && confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista}) del día ${registro.fecha}?`)) {
@@ -708,13 +701,15 @@
                     <div class="tabla-informe">
                         <h4>📋 Detalle por Unidad (Acumulado histórico)</h4>
                         <div style="overflow-x: auto;">
-                            <table>
-                                <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                             <table>
+                                <thead>
+                                    <tr><th>Unidad</th><th>Total Cédulas</th></tr>
+                                </thead>
                                 <tbody>
                                     ${unidadesOrdenadas.map(u => `<tr><td>${u}</td><td><strong>${detalleUnidades[u].toLocaleString()}</strong></td></tr>`).join('')}
                                     ${unidadesOrdenadas.length === 0 ? '<tr><td colspan="2" style="text-align:center">Sin datos registrados</td></tr>' : ''}
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
                     </div>
                     
@@ -757,13 +752,13 @@
                 return;
             }
             
-            // Guardar registro (PERMITE múltiples de la misma unidad el mismo día, por diferentes analistas)
+            // Guardar registro
             registros.push({fecha, cedulaAnalista, unidad, libro, cedulas, observaciones});
             localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado exitosamente! El Operador Principal podrá verlo.</div>';
             
-            // Limpiar formulario (excepto fecha)
+            // Limpiar formulario
             document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidad').value = '';
