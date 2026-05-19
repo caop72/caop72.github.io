@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Digitalización - Analistas y Recepción</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Tarjetas de acceso */
+        .access-cards {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card-analista {
+            border-top: 5px solid #4CAF50;
+        }
+
+        .card-recepcion {
+            border-top: 5px solid #FF9800;
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .card p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .card button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Paneles */
+        .panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .panel-activo {
+            display: block;
+        }
+
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .btn-cerrar {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-volver {
+            background: #999;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        /* Formulario analista */
+        .form-analista {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* Tablas */
+        .tabla-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .estadisticas {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .estadistica-item {
+            text-align: center;
+        }
+
+        .estadistica-item .numero {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .password-input {
+            margin-bottom: 20px;
+        }
+
+        .password-input input {
+            padding: 10px;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .btn-eliminar {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .mensaje-exito {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .estadisticas {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Tarjetas de selección -->
+        <div id="selectorCards" class="access-cards">
+            <div class="card card-analista" onclick="mostrarPanel('analista')">
+                <h2>📱 ANALISTA</h2>
+                <p>Registra tu digitalización diaria</p>
+                <button>Cargar datos</button>
+            </div>
+            <div class="card card-recepcion" onclick="mostrarPanel('recepcion')">
+                <h2>🔐 RECEPCIONISTA</h2>
+                <p>Ver todos los registros (requiere clave)</p>
+                <button>Acceder al panel</button>
+            </div>
+        </div>
+
+        <!-- Panel Analista -->
+        <div id="panelAnalista" class="panel">
+            <div class="header-panel">
+                <h2>📝 REGISTRO PARA ANALISTAS</h2>
+                <div>
+                    <button class="btn-volver" onclick="volverAlInicio()">Volver</button>
+                </div>
+            </div>
+
+            <div class="form-analista">
+                <form id="formAnalista">
+                    <div class="form-group">
+                        <label>📅 Fecha de digitalización:</label>
+                        <input type="date" id="fechaAnalista" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🏢 Unidad (ej: 94BRIG, 31BRIG, etc.):</label>
+                        <input type="text" id="unidadAnalista" placeholder="Ej: 94BRIG" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📖 Libro/Año asignado:</label>
+                        <input type="text" id="libroAnalista" placeholder="Ej: OCT 1983 o 2008" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🆔 Cédulas digitalizadas HOY:</label>
+                        <input type="number" id="cedulasAnalista" placeholder="Cantidad" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Observaciones (opcional):</label>
+                        <input type="text" id="observacionesAnalista" placeholder="Ninguna">
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 12px;">✅ ENVIAR REGISTRO</button>
+                </form>
+                <div id="mensajeAnalista"></div>
+            </div>
+
+            <div class="info-analista">
+                <h3>📌 Instrucciones:</h3>
+                <ul style="margin-left: 20px; color: #666;">
+                    <li>Registra ÚNICAMENTE TU trabajo de hoy</li>
+                    <li>No se puede registrar dos veces la misma unidad en la misma fecha</li>
+                    <li>El recepcionista verá todos los registros</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Panel Recepcionista -->
+        <div id="panelRecepcion" class="panel">
+            <div class="header-panel">
+                <h2>📊 PANEL DE RECEPCIÓN - CONTROL GENERAL</h2>
+                <div>
+                    <button class="btn-volver" onclick="volverAlInicio()">Volver</button>
+                </div>
+            </div>
+
+            <div id="contenidoRecepcion" style="display: none;">
+                <!-- Estadísticas -->
+                <div class="estadisticas" id="estadisticasRecepcion">
+                    <div class="estadistica-item">
+                        <div class="numero" id="totalUnidadesRecepcion">0</div>
+                        <div class="label">UNIDADES ACTIVAS</div>
+                    </div>
+                    <div class="estadistica-item">
+                        <div class="numero" id="totalHoyRecepcion">0</div>
+                        <div class="label">CÉDULAS HOY</div>
+                    </div>
+                    <div class="estadistica-item">
+                        <div class="numero" id="totalAcumuladoRecepcion">0</div>
+                        <div class="label">CÉDULAS ACUMULADAS</div>
+                    </div>
+                </div>
+
+                <!-- Registros de hoy -->
+                <div class="tabla-container">
+                    <h3>📋 REGISTROS DE HOY</h3>
+                    <table id="tablaHoyRecepcion">
+                        <thead>
+                            <tr><th>Unidad</th><th>Libro/Año</th><th>Cédulas</th><th>Observaciones</th><th>Acción</th></tr>
+                        </thead>
+                        <tbody id="tbodyHoyRecepcion"></tbody>
+                    </table>
+                </div>
+
+                <!-- Acumulado por unidad -->
+                <div class="tabla-container" style="margin-top: 30px;">
+                    <h3>📈 ACUMULADO POR UNIDAD</h3>
+                    <table id="tablaAcumuladoRecepcion">
+                        <thead>
+                            <tr><th>Unidad</th><th>Total Cédulas</th><th>Registros</th></tr>
+                        </thead>
+                        <tbody id="tbodyAcumuladoRecepcion"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="passwordRecepcion" style="text-align: center; padding: 40px;">
+                <h3>🔒 ACCESO RESTRINGIDO</h3>
+                <p>Ingrese la clave de recepcionista para ver todos los registros</p>
+                <div class="password-input">
+                    <input type="password" id="claveRecepcion" placeholder="Clave de acceso">
+                </div>
+                <button onclick="verificarClave()">Acceder al panel</button>
+                <p style="margin-top: 20px; font-size: 12px; color: #999;">Clave por defecto: <strong>recepcion2026</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clave para recepcionista
+        const CLAVE_RECEPCION = "recepcion2026";
+        
+        // Cargar datos guardados
+        let registros = JSON.parse(localStorage.getItem('digitalizacion_registros')) || [];
+
+        // Datos iniciales de ejemplo
+        const datosIniciales = [
+            {fecha: "2026-05-19", unidad: "94BRIG", libro: "OCT 1983", cedulas: 404, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "31BRIG", libro: "2008", cedulas: 250, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "35BRIG", libro: "2005", cedulas: 226, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "62BRIG", libro: "1996", cedulas: 331, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "92BRIG", libro: "1986", cedulas: 223, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "82BRIG", libro: "1991", cedulas: 125, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "51 BRINFS", libro: "2001", cedulas: 385, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "32 BRIGADA", libro: "2007", cedulas: 374, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "22BRIF", libro: "2010", cedulas: 344, observaciones: "Ninguna"},
+            {fecha: "2026-05-19", unidad: "11BRIG", libro: "2015", cedulas: 179, observaciones: "Ninguna"}
+        ];
+
+        if(registros.length === 0) {
+            registros = datosIniciales;
+            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+        }
+
+        // Mostrar fecha actual en formulario analista
+        document.addEventListener('DOMContentLoaded', function() {
+            const hoy = new Date().toISOString().split('T')[0];
+            if(document.getElementById('fechaAnalista')) {
+                document.getElementById('fechaAnalista').value = hoy;
+            }
+        });
+
+        // Mostrar panel seleccionado
+        function mostrarPanel(tipo) {
+            document.getElementById('selectorCards').style.display = 'none';
+            
+            if(tipo === 'analista') {
+                document.getElementById('panelAnalista').classList.add('panel-activo');
+                // Limpiar mensaje anterior
+                document.getElementById('mensajeAnalista').innerHTML = '';
+                // Resetear formulario
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaAnalista').value = hoy;
+                document.getElementById('unidadAnalista').value = '';
+                document.getElementById('libroAnalista').value = '';
+                document.getElementById('cedulasAnalista').value = '';
+                document.getElementById('observacionesAnalista').value = '';
+            } else {
+                document.getElementById('panelRecepcion').classList.add('panel-activo');
+                // Mostrar pantalla de contraseña
+                document.getElementById('passwordRecepcion').style.display = 'block';
+                document.getElementById('contenidoRecepcion').style.display = 'none';
+                document.getElementById('claveRecepcion').value = '';
+            }
+        }
+
+        function volverAlInicio() {
+            document.getElementById('selectorCards').style.display = 'flex';
+            document.getElementById('panelAnalista').classList.remove('panel-activo');
+            document.getElementById('panelRecepcion').classList.remove('panel-activo');
+        }
+
+        // Verificar clave de recepcionista
+        function verificarClave() {
+            const clave = document.getElementById('claveRecepcion').value;
+            if(clave === CLAVE_RECEPCION) {
+                document.getElementById('passwordRecepcion').style.display = 'none';
+                document.getElementById('contenidoRecepcion').style.display = 'block';
+                actualizarPanelRecepcion();
+            } else {
+                alert('❌ Clave incorrecta. Acceso denegado.');
+            }
+        }
+
+        // Actualizar panel de recepcionista
+        function actualizarPanelRecepcion() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const registrosHoy = registros.filter(r => r.fecha === hoy);
+            const acumuladoPorUnidad = {};
+            const conteoPorUnidad = {};
+            
+            registros.forEach(reg => {
+                acumuladoPorUnidad[reg.unidad] = (acumuladoPorUnidad[reg.unidad] || 0) + reg.cedulas;
+                conteoPorUnidad[reg.unidad] = (conteoPorUnidad[reg.unidad] || 0) + 1;
+            });
+            
+            const totalHoy = registrosHoy.reduce((sum, reg) => sum + reg.cedulas, 0);
+            const totalAcumulado = Object.values(acumuladoPorUnidad).reduce((sum, val) => sum + val, 0);
+            const totalUnidades = Object.keys(acumuladoPorUnidad).length;
+            
+            document.getElementById('totalUnidadesRecepcion').textContent = totalUnidades;
+            document.getElementById('totalHoyRecepcion').textContent = totalHoy;
+            document.getElementById('totalAcumuladoRecepcion').textContent = totalAcumulado;
+            
+            // Tabla hoy
+            const tbodyHoy = document.getElementById('tbodyHoyRecepcion');
+            if(registrosHoy.length === 0) {
+                tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">No hay registros hoy</td></tr>';
+            } else {
+                tbodyHoy.innerHTML = registrosHoy.map(reg => `
+                    <tr>
+                        <td>${reg.unidad}</td>
+                        <td>${reg.libro}</td>
+                        <td>${reg.cedulas}</td>
+                        <td>${reg.observaciones || 'Ninguna'}</td>
+                        <td><button class="btn-eliminar" onclick="eliminarRegistro('${reg.fecha}', '${reg.unidad}')">🗑️</button></td>
+                    </tr>
+                `).join('');
+            }
+            
+            // Tabla acumulado
+            const tbodyAcumulado = document.getElementById('tbodyAcumuladoRecepcion');
+            const unidades = Object.keys(acumuladoPorUnidad).sort();
+            if(unidades.length === 0) {
+                tbodyAcumulado.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin datos acumulados</td></tr>';
+            } else {
+                tbodyAcumulado.innerHTML = unidades.map(unidad => `
+                    <tr>
+                        <td>${unidad}</td>
+                        <td><strong>${acumuladoPorUnidad[unidad]}</strong></td>
+                        <td>${conteoPorUnidad[unidad]} día(s)</td>
+                    </tr>
+                `).join('');
+            }
+        }
+        
+        // Eliminar registro (solo recepcionista)
+        window.eliminarRegistro = function(fecha, unidad) {
+            if(confirm(`¿Eliminar registro de ${unidad} del día ${fecha}?`)) {
+                registros = registros.filter(r => !(r.fecha === fecha && r.unidad === unidad));
+                localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+                actualizarPanelRecepcion();
+            }
+        }
+        
+        // Formulario analista
+        document.getElementById('formAnalista')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fecha = document.getElementById('fechaAnalista').value;
+            const unidad = document.getElementById('unidadAnalista').value.trim().toUpperCase();
+            const libro = document.getElementById('libroAnalista').value.trim();
+            const cedulas = parseInt(document.getElementById('cedulasAnalista').value);
+            const observaciones = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
+            
+            if(!fecha || !unidad || !libro || !cedulas) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito" style="background:#f44336">❌ Complete todos los campos obligatorios</div>';
+                return;
+            }
+            
+            // Verificar si ya existe registro de esta unidad en esta fecha
+            const existe = registros.some(r => r.fecha === fecha && r.unidad === unidad);
+            if(existe) {
+                document.getElementById('mensajeAnalista').innerHTML = `<div class="mensaje-exito" style="background:#ff9800">⚠️ Ya existe un registro para ${unidad} en la fecha ${fecha}. Solo se permite un registro por día.</div>`;
+                return;
+            }
+            
+            registros.push({fecha, unidad, libro, cedulas, observaciones});
+            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+            
+            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado exitosamente! El recepcionista podrá verlo.</div>';
+            
+            // Limpiar formulario menos fecha
+            document.getElementById('unidadAnalista').value = '';
+            document.getElementById('libroAnalista').value = '';
+            document.getElementById('cedulasAnalista').value = '';
+            document.getElementById('observacionesAnalista').value = '';
+            
+            // Ocultar mensaje después de 3 segundos
+            setTimeout(() => {
+                document.getElementById('mensajeAnalista').innerHTML = '';
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
