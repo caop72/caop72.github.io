@@ -348,7 +348,7 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>✏️ O escriba una nueva unidad:</label>
+                        <label>✏️ O escriba una nueva unidad (solo si no está en la lista):</label>
                         <input type="text" id="nuevaUnidad" placeholder="Ej: NUEVA UNIDAD">
                     </div>
                     <div class="form-group">
@@ -371,7 +371,8 @@
                 <strong>📌 Instrucciones:</strong><br>
                 • Registra solo TU trabajo de hoy<br>
                 • Ingresa tu número de cédula para identificación<br>
-                • Varios analistas pueden registrar la misma unidad en el mismo día<br>
+                • Si dos analistas de la misma unidad registran, ambos aparecen por separado<br>
+                • El total de la unidad se suma automáticamente en el acumulado<br>
                 • Si tu unidad no está en la lista, escríbela en "nueva unidad"
             </div>
         </div>
@@ -435,7 +436,7 @@
         // ========== CONFIGURACIÓN ==========
         const CLAVE_OPERADOR = "registro2026**";
         
-        // LISTA COMPLETA DE 29 UNIDADES
+        // LISTA EXACTA DE 33 UNIDADES (según lo solicitado)
         const UNIDADES_PREDETERMINADAS = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
             "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
@@ -448,43 +449,25 @@
             "CAVEJB", "COLOG", "6TO CING"
         ];
         
+        // REGISTROS VÍRGENES (sin datos de ejemplo)
         let registros = JSON.parse(localStorage.getItem('digitalizacion_registros')) || [];
         
-        // Datos iniciales de ejemplo (con cédulas de ejemplo)
-        const datosIniciales = [
-            {fecha: "2026-05-19", cedulaAnalista: "12345678", unidad: "94 BRIGADA", libro: "OCT 1983", cedulas: 404, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "87654321", unidad: "31 BRIGADA", libro: "2008", cedulas: 250, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "11111111", unidad: "35 BRIGADA", libro: "2005", cedulas: 226, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "22222222", unidad: "62 BRIGADA", libro: "1996", cedulas: 331, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "33333333", unidad: "92 BRIGADA", libro: "1986", cedulas: 223, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "44444444", unidad: "82 BRIGADA", libro: "1991", cedulas: 125, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "55555555", unidad: "51 BRIGADA", libro: "2001", cedulas: 385, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "66666666", unidad: "32 BRIGADA", libro: "2007", cedulas: 374, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "77777777", unidad: "22 BRIGADA", libro: "2010", cedulas: 344, observaciones: "Ninguna"},
-            {fecha: "2026-05-19", cedulaAnalista: "88888888", unidad: "11 BRIGADA", libro: "2015", cedulas: 179, observaciones: "Ninguna"}
-        ];
+        // Si no hay registros, empezar con array vacío (sin datos de ejemplo)
+        if(registros.length === 0) {
+            registros = [];
+            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+        }
         
-        // Función para obtener todas las unidades (las predeterminadas + las que hayan agregado analistas)
+        // Función para obtener todas las unidades (las predeterminadas + las nuevas que agreguen analistas)
         function obtenerTodasLasUnidades() {
             const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
             const todas = [...new Set([...UNIDADES_PREDETERMINADAS, ...unidadesDeRegistros])];
             return todas.sort();
         }
         
-        if(registros.length === 0) {
-            registros = datosIniciales;
-            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
-        }
-        
         // Funciones de fecha
         function getFechaHoy() { 
             return new Date().toISOString().split('T')[0]; 
-        }
-        
-        function formatearFechaDDMMMYYYY(fechaStr) {
-            const fecha = new Date(fechaStr);
-            const dias = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-            return `${String(fecha.getDate()).padStart(2,'0')} ${dias[fecha.getMonth()]} ${fecha.getFullYear()}`;
         }
         
         function formatearFechaActual() {
@@ -521,6 +504,8 @@
             
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
+            
+            // Acumulado por unidad (SUMA de todos los registros de cada unidad)
             const acumulado = {};
             const analistasPorUnidad = {};
             
@@ -540,25 +525,25 @@
             document.getElementById('totalAcumulado') && (document.getElementById('totalAcumulado').innerText = totalAcum);
             document.getElementById('diasTrabajados') && (document.getElementById('diasTrabajados').innerText = diasTrabajados);
             
-            // Tabla de hoy (con cédula del analista)
+            // Tabla de hoy (con cédula del analista - cada registro individual)
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) {
                     tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
                 } else {
-                    tbodyHoy.innerHTML = registrosHoy.map(r => `
+                    tbodyHoy.innerHTML = registrosHoy.map((r, index) => `
                         <tr>
                             <td>${r.cedulaAnalista}</td>
                             <td>${r.unidad}</td>
                             <td>${r.libro}</td>
                             <td>${r.cedulas}</td>
-                            <td><button class="btn-eliminar" onclick="eliminarRegistro('${r.fecha}','${r.unidad}','${r.cedulaAnalista}')">🗑️</button></td>
+                            <td><button class="btn-eliminar" onclick="eliminarRegistro(${index})">🗑️</button></td>
                         </tr>
                     `).join('');
                 }
             }
             
-            // Tabla acumulado por unidad
+            // Tabla acumulado por unidad (SUMA de todos los aportes)
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if(tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
@@ -576,9 +561,11 @@
             }
         }
         
-        window.eliminarRegistro = function(fecha, unidad, cedula) {
-            if(confirm(`¿Eliminar registro de ${unidad} (Analista: ${cedula}) del ${fecha}?`)) {
-                registros = registros.filter(r => !(r.fecha === fecha && r.unidad === unidad && r.cedulaAnalista === cedula));
+        // Eliminar registro por índice (más preciso)
+        window.eliminarRegistro = function(index) {
+            const registro = registros[index];
+            if(registro && confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista}) del día ${registro.fecha}?`)) {
+                registros.splice(index, 1);
                 localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
                 actualizarPaneles();
             }
@@ -592,6 +579,9 @@
                 document.getElementById('fechaAnalista').value = getFechaHoy();
                 document.getElementById('cedulaAnalista').value = '';
                 document.getElementById('nuevaUnidad').value = '';
+                document.getElementById('libroAnalista').value = '';
+                document.getElementById('cedulasAnalista').value = '';
+                document.getElementById('observacionesAnalista').value = '';
                 actualizarUnidades();
             } else {
                 document.getElementById('panelOperador').classList.add('panel-activo');
@@ -619,7 +609,7 @@
         
         // INFORME EJECUTIVO - Con fecha CORRECTA del sistema
         function generarInformeEjecutivo() {
-            // FECHA ACTUAL DEL SISTEMA (NO la de los registros)
+            // FECHA ACTUAL DEL SISTEMA
             const ahora = new Date();
             const mesesCortos = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
             const fechaCorta = `${String(ahora.getDate()).padStart(2,'0')} ${mesesCortos[ahora.getMonth()]} ${ahora.getFullYear()}`;
@@ -641,7 +631,7 @@
             const diasTrabajados = new Set(registros.map(r => r.fecha)).size;
             const totalReportes = registros.length;
             
-            // Detalle por unidad
+            // Detalle por unidad (SUMA de todos los aportes)
             const detalleUnidades = {};
             registros.forEach(r => { detalleUnidades[r.unidad] = (detalleUnidades[r.unidad] || 0) + r.cedulas; });
             const unidadesOrdenadas = Object.keys(detalleUnidades).sort();
