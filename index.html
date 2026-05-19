@@ -168,6 +168,17 @@
         }
 
         /* Panel Operador */
+        .fecha-actual-operador {
+            background: #eef2ff;
+            padding: 12px 16px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 18px;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -287,6 +298,9 @@
                 font-size: 12px;
                 padding: 8px 5px;
             }
+            .fecha-actual-operador {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -366,6 +380,11 @@
             </div>
 
             <div id="contenidoOperador" style="display: none;">
+                <!-- FECHA ACTUAL VISIBLE -->
+                <div class="fecha-actual-operador" id="fechaActualOperador">
+                    📅 Cargando fecha...
+                </div>
+
                 <div class="stats-grid" id="statsOperador">
                     <div class="stat-card"><div class="stat-number" id="totalUnidades">0</div><div class="stat-label">UNIDADES ACTIVAS</div></div>
                     <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
@@ -424,6 +443,24 @@
             localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
         }
         
+        // Funciones de fecha CORREGIDAS
+        function getFechaHoy() { 
+            return new Date().toISOString().split('T')[0]; 
+        }
+        
+        function formatearFechaDDMMMYYYY(fechaStr) {
+            const fecha = new Date(fechaStr);
+            const dias = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+            return `${String(fecha.getDate()).padStart(2,'0')} ${dias[fecha.getMonth()]} ${fecha.getFullYear()}`;
+        }
+        
+        function formatearFechaActual() {
+            const hoy = new Date();
+            const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+            const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+            return `${dias[hoy.getDay()]}, ${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+        }
+        
         // Actualizar lista de unidades
         function actualizarUnidades() {
             const unidades = [...new Set(registros.map(r => r.unidad))].sort();
@@ -441,16 +478,15 @@
             }
         }
         
-        function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
-        
-        function formatearFechaDDMMMYYYY(fechaStr) {
-            const fecha = new Date(fechaStr);
-            const dias = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-            return `${String(fecha.getDate()).padStart(2,'0')} ${dias[fecha.getMonth()]} ${fecha.getFullYear()}`;
-        }
-        
         function actualizarPaneles() {
             actualizarUnidades();
+            
+            // Mostrar fecha actual en el panel del operador
+            const fechaActualDiv = document.getElementById('fechaActualOperador');
+            if(fechaActualDiv) {
+                fechaActualDiv.innerHTML = `📅 ${formatearFechaActual()}`;
+            }
+            
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             const acumulado = {};
@@ -530,12 +566,22 @@
             } else alert('❌ Clave incorrecta');
         }
         
-        // INFORME EJECUTIVO CORREGIDO (con datos reales y diseño móvil)
+        // INFORME EJECUTIVO CORREGIDO - USA LA FECHA ACTUAL DEL SISTEMA
         function generarInformeEjecutivo() {
+            // FECHA ACTUAL (NO la de los registros)
+            const ahora = new Date();
+            const dias = ['DOMINGO', 'LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO'];
+            const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
+            const fechaActualLarga = `${dias[ahora.getDay()]}, ${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}`;
+            
+            // Formato corto para el resumen (19 MAY 2026)
+            const mesesCortos = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+            const fechaCorta = `${String(ahora.getDate()).padStart(2,'0')} ${mesesCortos[ahora.getMonth()]} ${ahora.getFullYear()}`;
+            
             const hoy = getFechaHoy();
-            const fechaFormateada = formatearFechaDDMMMYYYY(hoy);
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             const totalHoy = registrosHoy.reduce((s,r) => s + r.cedulas, 0);
+            
             let totalAcumulado = 0;
             const unidadesSet = new Set();
             registros.forEach(r => { totalAcumulado += r.cedulas; unidadesSet.add(r.unidad); });
@@ -543,7 +589,7 @@
             const diasTrabajados = new Set(registros.map(r => r.fecha)).size;
             const totalReportes = registros.length;
             
-            // Calcular detalle por unidad para el informe
+            // Detalle por unidad
             const detalleUnidades = {};
             registros.forEach(r => { detalleUnidades[r.unidad] = (detalleUnidades[r.unidad] || 0) + r.cedulas; });
             const unidadesOrdenadas = Object.keys(detalleUnidades).sort();
@@ -607,12 +653,12 @@
                     <div class="header">
                         <h1>📊 INFORME PERIÓDICO DEL AVANCE</h1>
                         <h2>Jornada de Digitalización de Data de la Reserva Militar</h2>
-                        <div class="fecha-informe">📅 ${fechaFormateada}</div>
+                        <div class="fecha-informe">📅 ${fechaCorta}</div>
                     </div>
                     
                     <div class="resumen">
                         <p>🔹 <strong>RESUMEN EJECUTIVO</strong></p>
-                        <p>Para la fecha <strong>${fechaFormateada}</strong>, se han procesado <span class="numero-grande">${totalAcumulado.toLocaleString()}</span> cédulas en <strong>total</strong>, siendo hoy procesadas <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p>
+                        <p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcumulado.toLocaleString()}</span> cédulas en <strong>total</strong>, siendo hoy procesadas <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p>
                     </div>
                     
                     <div class="indicadores">
@@ -639,7 +685,7 @@
                         <p>${new Date().toLocaleString()}</p>
                     </div>
                 </div>
-                <script>window.print();<\/script>
+                <script>setTimeout(() => window.print(), 500);<\/script>
             </body>
             </html>`;
             
