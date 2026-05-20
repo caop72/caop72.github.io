@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Jornada de Digitalización - Reserva Militar</title>
+    <!-- Librería para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -121,6 +123,23 @@
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; }
         
+        /* Gráfica */
+        .grafica-container {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 25px;
+        }
+        .grafica-container h4 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        canvas {
+            max-height: 250px;
+            width: 100%;
+        }
+        
         /* Tablas */
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
@@ -146,6 +165,7 @@
             font-size: 16px;
             font-weight: bold;
             width: 100%;
+            margin-top: 10px;
         }
         
         /* Acceso */
@@ -170,6 +190,7 @@
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat-number { font-size: 24px; }
+            .grafica-container { padding: 10px; }
         }
     </style>
 </head>
@@ -256,6 +277,13 @@
                     <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">ACUMULADO</div></div>
                     <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS</div></div>
                 </div>
+
+                <!-- NUEVA SECCIÓN: GRÁFICA DE AVANCE DIARIO -->
+                <div class="grafica-container">
+                    <h4>📊 AVANCE DIARIO (últimos 7 días)</h4>
+                    <canvas id="graficaAvance" width="400" height="200"></canvas>
+                </div>
+
                 <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Obs</th><th></th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
                 <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th></th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
                 <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
@@ -289,8 +317,8 @@
             "82BRIG": "82 BRIGADA", "92BRIG": "92 BRIGADA", "94BRIG": "94 BRIGADA"
         };
         
-        // Datos
         let registros = [];
+        let miGrafica = null;
         
         // ============================================================
         // FUNCIONES
@@ -310,6 +338,92 @@
             const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
             const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
             return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+        }
+        
+        // Obtener datos para la gráfica (últimos 7 días)
+        function obtenerDatosGrafica() {
+            const hoy = new Date();
+            const ultimos7 = [];
+            const datos = [];
+            
+            // Generar últimos 7 días (desde hace 6 días hasta hoy)
+            for (let i = 6; i >= 0; i--) {
+                const fecha = new Date();
+                fecha.setDate(hoy.getDate() - i);
+                const fechaStr = fecha.toISOString().split('T')[0];
+                ultimos7.push(fechaStr);
+            }
+            
+            // Calcular total de cédulas por día
+            ultimos7.forEach(fecha => {
+                const totalDia = registros
+                    .filter(r => r.fecha === fecha)
+                    .reduce((sum, r) => sum + r.cedulas, 0);
+                datos.push(totalDia);
+            });
+            
+            // Formatear etiquetas (DD/MM)
+            const etiquetas = ultimos7.map(fecha => {
+                const d = new Date(fecha);
+                return `${d.getDate()}/${d.getMonth()+1}`;
+            });
+            
+            return { etiquetas, datos };
+        }
+        
+        // Actualizar gráfica
+        function actualizarGrafica() {
+            const canvas = document.getElementById('graficaAvance');
+            if (!canvas) return;
+            
+            const { etiquetas, datos } = obtenerDatosGrafica();
+            
+            if (miGrafica) {
+                miGrafica.destroy();
+            }
+            
+            miGrafica = new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Cédulas digitalizadas',
+                        data: datos,
+                        backgroundColor: 'rgba(255, 152, 0, 0.7)',
+                        borderColor: 'rgba(255, 152, 0, 1)',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        barPercentage: 0.65
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Cédulas: ${context.raw.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Cédulas', font: { size: 11 } },
+                            ticks: { callback: function(value) { return value.toLocaleString(); } }
+                        },
+                        x: {
+                            title: { display: true, text: 'Fecha', font: { size: 11 } }
+                        }
+                    }
+                }
+            });
         }
         
         function cargarDatos() {
@@ -334,11 +448,13 @@
             }
             
             actualizarPaneles();
+            actualizarGrafica();
         }
         
         function guardarDatos() {
             localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
             actualizarPaneles();
+            actualizarGrafica();
         }
         
         function obtenerUnidades() {
@@ -371,7 +487,6 @@
                 select.value = valorActual;
             }
             
-            // Mostrar/ocultar campo de nueva unidad
             const campoNueva = document.getElementById('campoNuevaUnidad');
             if (select.value === "OTRA_UNIDAD") {
                 campoNueva.classList.add('visible');
@@ -387,7 +502,6 @@
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             
-            // Acumulados
             const acumulado = {};
             const analistasPorUnidad = {};
             registros.forEach(r => {
@@ -399,13 +513,11 @@
             const totalHoy = registrosHoy.reduce((s, r) => s + r.cedulas, 0);
             const totalAcum = Object.values(acumulado).reduce((s, v) => s + v, 0);
             
-            // Actualizar estadísticas
             document.getElementById('totalRegistros').innerText = registros.length;
             document.getElementById('totalHoy').innerText = totalHoy;
             document.getElementById('totalAcumulado').innerText = totalAcum;
             document.getElementById('diasTrabajados').innerText = new Set(registros.map(r => r.fecha)).size;
             
-            // Tabla TODOS los registros
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
@@ -428,7 +540,6 @@
                 }
             }
             
-            // Tabla REGISTROS DE HOY
             const tbodyHoy = document.getElementById('tbodyHoy');
             if (tbodyHoy) {
                 if (registrosHoy.length === 0) {
@@ -446,7 +557,6 @@
                 }
             }
             
-            // Tabla ACUMULADO POR UNIDAD
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
@@ -581,7 +691,7 @@
         }
         
         // ============================================================
-        // EVENTOS Y INICIALIZACIÓN
+        // EVENTOS E INICIALIZACIÓN
         // ============================================================
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
         document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
@@ -612,14 +722,12 @@
             const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             const hora = getHora();
             
-            // Validar año
             if (libro && !/^\d{4}$/.test(libro)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
                 return;
             }
             
-            // Determinar unidad final
             let unidadFinal = "";
             if (unidad === "OTRA_UNIDAD") {
                 if (!nuevaUnidad) {
@@ -637,7 +745,6 @@
                 }
             }
             
-            // Validaciones básicas
             if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
@@ -650,13 +757,11 @@
                 return;
             }
             
-            // Guardar
             registros.push({ fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora });
             guardarDatos();
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado exitosamente!</div>';
             
-            // Limpiar formulario
             document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidadTexto').value = '';
