@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <!-- PANTALLA ANALISTA (solo formulario, sin resumen) -->
+        <!-- PANTALLA ANALISTA (SOLO FORMULARIO, SIN MIS REGISTROS) -->
         <div id="panelAnalista" class="panel">
             <div class="header-panel">
                 <h2>📝 REGISTRO PARA ANALISTAS</h2>
@@ -165,10 +165,28 @@
         
         let registros = [];
         
-        function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
-        function formatearHora() { const ahora = new Date(); return `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`; }
-        function formatearFechaLegible(fechaStr) { const fecha = new Date(fechaStr); const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; }
-        function formatearFechaActual() { const hoy = new Date(); const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; }
+        function getFechaHoy() { 
+            return new Date().toISOString().split('T')[0]; 
+        }
+        
+        function formatearHora() { 
+            const ahora = new Date(); 
+            return `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`; 
+        }
+        
+        function formatearFechaLegible(fechaStr) { 
+            if(!fechaStr) return '---';
+            const fecha = new Date(fechaStr); 
+            const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; 
+            const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; 
+            return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; 
+        }
+        
+        function formatearFechaActual() { 
+            const hoy = new Date(); 
+            const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; 
+            return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; 
+        }
         
         function cargarDatos() {
             const datosGuardados = localStorage.getItem('digitalizacion_registros');
@@ -217,7 +235,11 @@
             if(fechaDiv) fechaDiv.innerHTML = `📅 ${formatearFechaActual()}`;
             
             const hoy = getFechaHoy();
+            console.log("Fecha actual (hoy):", hoy);
+            
             const registrosHoy = registros.filter(r => r.fecha === hoy);
+            console.log("Registros de hoy:", registrosHoy.length);
+            
             const acumulado = {};
             const analistasPorUnidad = {};
             registros.forEach(r => { 
@@ -254,7 +276,7 @@
                 `).join('');
             }
             
-            // Tabla hoy (registros del día actual)
+            // Tabla hoy
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
