@@ -105,7 +105,6 @@
             </div>
         </div>
 
-        <!-- PANTALLA ANALISTA (SOLO FORMULARIO, SIN MIS REGISTROS) -->
         <div id="panelAnalista" class="panel">
             <div class="header-panel">
                 <h2>📝 REGISTRO PARA ANALISTAS</h2>
@@ -132,7 +131,6 @@
             </div>
         </div>
 
-        <!-- PANTALLA OPERADOR -->
         <div id="panelOperador" class="panel">
             <div class="header-panel">
                 <h2>🔐 OPERADOR PRINCIPAL</h2>
@@ -161,32 +159,48 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
+        
+        // ========== TABLA DE CORRECCIONES (basada en tus nombres reales) ==========
+        const CORRECCIONES_UNIDADES = {
+            "11BRIG": "11 BRIGADA",
+            "22BRIF": "22 BRIGADA",
+            "31BRIG": "31 BRIGADA",
+            "35BRIG": "35 BRIGADA",
+            "51 BRINFS": "51 BRIGADA",
+            "62BRIG": "62 BRIGADA",
+            "82BRIG": "82 BRIGADA",
+            "92BRIG": "92 BRIGADA",
+            "94BRIG": "94 BRIGADA",
+            "TRINIG": "?? BRIGADA"
+        };
+        
         const UNIDADES_BASE = ["11 BRIGADA","12 BRIGADA","13 BRIGADA","14 BRIGADA","21 BRIGADA","22 BRIGADA","25 BRIGADA","31 BRIGADA","32 BRIGADA","33 BRIGADA","35 BRIGADA","41 BRIGADA","42 BRIGADA","43 BRIGADA","51 BRIGADA","52 BRIGADA","53 BRIGADA","61 BRIGADA","62 BRIGADA","63 BRIGADA","64 BRIGADA","81 BRIGADA","82 BRIGADA","83 BRIGADA","91 BRIGADA","92 BRIGADA","93 BRIGADA","94 BRIGADA","99 BRIGADA","CAVEJB","COLOG","6TO CING"];
         
         let registros = [];
         
-        function getFechaHoy() { 
-            return new Date().toISOString().split('T')[0]; 
+        // Función para corregir unidades en los registros existentes
+        function corregirUnidadesExistentes() {
+            let cambios = 0;
+            registros = registros.map(reg => {
+                let nombreOriginal = reg.unidad;
+                let nombreCorregido = CORRECCIONES_UNIDADES[nombreOriginal];
+                if (nombreCorregido && nombreCorregido !== nombreOriginal) {
+                    cambios++;
+                    console.log(`✏️ Corregido: "${nombreOriginal}" → "${nombreCorregido}"`);
+                    return { ...reg, unidad: nombreCorregido };
+                }
+                return reg;
+            });
+            if (cambios > 0) {
+                guardarDatos();
+                console.log(`✅ Se corrigieron ${cambios} registros automáticamente`);
+            }
         }
         
-        function formatearHora() { 
-            const ahora = new Date(); 
-            return `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`; 
-        }
-        
-        function formatearFechaLegible(fechaStr) { 
-            if(!fechaStr) return '---';
-            const fecha = new Date(fechaStr); 
-            const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; 
-            const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; 
-            return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; 
-        }
-        
-        function formatearFechaActual() { 
-            const hoy = new Date(); 
-            const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; 
-            return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; 
-        }
+        function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
+        function formatearHora() { const ahora = new Date(); return `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`; }
+        function formatearFechaLegible(fechaStr) { if(!fechaStr) return '---'; const fecha = new Date(fechaStr); const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; }
+        function formatearFechaActual() { const hoy = new Date(); const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; }
         
         function cargarDatos() {
             const datosGuardados = localStorage.getItem('digitalizacion_registros');
@@ -197,6 +211,8 @@
             } else {
                 registros = [];
             }
+            // CORREGIR UNIDADES AUTOMÁTICAMENTE AL CARGAR
+            corregirUnidadesExistentes();
             actualizarPaneles();
             console.log(`✅ Cargados ${registros.length} registros`);
         }
@@ -235,11 +251,7 @@
             if(fechaDiv) fechaDiv.innerHTML = `📅 ${formatearFechaActual()}`;
             
             const hoy = getFechaHoy();
-            console.log("Fecha actual (hoy):", hoy);
-            
             const registrosHoy = registros.filter(r => r.fecha === hoy);
-            console.log("Registros de hoy:", registrosHoy.length);
-            
             const acumulado = {};
             const analistasPorUnidad = {};
             registros.forEach(r => { 
@@ -256,11 +268,10 @@
             document.getElementById('totalAcumulado') && (document.getElementById('totalAcumulado').innerText = totalAcum);
             document.getElementById('diasTrabajados') && (document.getElementById('diasTrabajados').innerText = new Set(registros.map(r=>r.fecha)).size);
             
-            // Tabla todos los registros
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if(tbodyTodos) {
                 const registrosOrdenados = [...registros].reverse();
-                if(registrosOrdenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">Sin registros</td></tr>';
+                if(registrosOrdenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">Sin registros</td>'';
                 else tbodyTodos.innerHTML = registrosOrdenados.map((r, idx) => `
                     <tr>
                         <td>${idx+1}</td>
@@ -276,10 +287,9 @@
                 `).join('');
             }
             
-            // Tabla hoy
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
-                if(registrosHoy.length === 0) tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
+                if(registrosHoy.length === 0) tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td>'';
                 else tbodyHoy.innerHTML = registrosHoy.map((r) => `
                     <tr>
                         <td>${r.cedulaAnalista}</td>
@@ -291,11 +301,10 @@
                 `).join('');
             }
             
-            // Tabla acumulado por unidad
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if(tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
-                if(unidades.length === 0) tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td></tr>';
+                if(unidades.length === 0) tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td>'';
                 else tbodyAcum.innerHTML = unidades.map(u => `
                     <tr>
                         <td>${u}</td>
