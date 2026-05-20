@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Jornada de Digitalización - Reserva Militar</title>
-    <!-- Librería para gráficos -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -16,7 +15,6 @@
         }
         .container { max-width: 1400px; margin: 0 auto; }
         
-        /* Tarjetas de inicio */
         .access-cards {
             display: flex;
             gap: 20px;
@@ -54,7 +52,6 @@
             width: 100%;
         }
         
-        /* Paneles */
         .panel {
             background: white;
             border-radius: 24px;
@@ -83,7 +80,6 @@
             cursor: pointer;
         }
         
-        /* Formulario */
         .form-analista { background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e3c72; }
@@ -106,7 +102,6 @@
             width: 100%;
         }
         
-        /* Estadísticas */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -123,30 +118,22 @@
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; }
         
-        /* Gráfica */
         .grafica-container {
             background: #f8f9fa;
             border-radius: 16px;
             padding: 15px;
             margin-bottom: 25px;
         }
-        .grafica-container h4 {
-            color: #1e3c72;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-        canvas {
-            max-height: 250px;
-            width: 100%;
-        }
+        .grafica-container h4 { color: #1e3c72; margin-bottom: 15px; font-size: 18px; }
+        canvas { max-height: 250px; width: 100%; }
         
-        /* Tablas */
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
-        .tabla-container { overflow-x: auto; max-height: 300px; overflow-y: auto; }
+        .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #1e3c72; color: white; position: sticky; top: 0; }
+        th { background: #1e3c72; color: white; position: sticky; top: 0; white-space: nowrap; }
+        td { white-space: nowrap; }
         .btn-eliminar {
             background: #dc3545;
             color: white;
@@ -168,7 +155,6 @@
             margin-top: 10px;
         }
         
-        /* Acceso */
         .password-area { text-align: center; padding: 30px 20px; }
         .password-area input {
             padding: 14px;
@@ -187,16 +173,24 @@
         .campo-nueva-unidad { display: none; }
         .campo-nueva-unidad.visible { display: block; }
         
+        .badge-analista {
+            background: #e9ecef;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+            color: #495057;
+            display: inline-block;
+        }
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat-number { font-size: 24px; }
-            .grafica-container { padding: 10px; }
+            th, td { font-size: 11px; padding: 6px 4px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- PANTALLA DE INICIO -->
         <div id="pantallaInicio" class="access-cards">
             <div class="card card-analista" id="btnAnalista">
                 <h2>📱 ANALISTA</h2>
@@ -241,7 +235,7 @@
                         <input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required>
                     </div>
                     <div class="form-group">
-                        <label>🔢 Cédulas HOY:</label>
+                        <label>🔢 Cédulas digitalizadas HOY:</label>
                         <input type="number" id="cedulasAnalista" placeholder="Cantidad" required>
                     </div>
                     <div class="form-group">
@@ -272,22 +266,73 @@
             </div>
             <div id="contenidoOperador" style="display: none;">
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">TOTAL</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">HOY</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">ACUMULADO</div></div>
-                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">TOTAL REGISTROS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
                 </div>
 
-                <!-- NUEVA SECCIÓN: GRÁFICA DE AVANCE DIARIO -->
                 <div class="grafica-container">
                     <h4>📊 AVANCE DIARIO (últimos 7 días)</h4>
                     <canvas id="graficaAvance" width="400" height="200"></canvas>
                 </div>
 
-                <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Obs</th><th></th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
-                <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th></th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
-                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
-                <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME</button>
+                <!-- TABLA CON TODOS LOS DATOS DEL ANALISTA -->
+                <div class="seccion-tabla">
+                    <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
+                    <div class="tabla-container">
+                        <table id="tablaTodosRegistros">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>FECHA</th>
+                                    <th>HORA</th>
+                                    <th>ANALISTA (CÉDULA)</th>
+                                    <th>UNIDAD</th>
+                                    <th>AÑO LIBRO</th>
+                                    <th>CÉDULAS</th>
+                                    <th>OBSERVACIONES</th>
+                                    <th>ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyTodosRegistros"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- REGISTROS DE HOY -->
+                <div class="seccion-tabla">
+                    <h4>📋 REGISTROS DE HOY</h4>
+                    <div class="tabla-container">
+                        <table id="tablaHoy">
+                            <thead>
+                                <tr>
+                                    <th>HORA</th>
+                                    <th>ANALISTA</th>
+                                    <th>UNIDAD</th>
+                                    <th>AÑO</th>
+                                    <th>CÉDULAS</th>
+                                    <th>OBSERVACIONES</th>
+                                    <th>ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyHoy"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ACUMULADO POR UNIDAD -->
+                <div class="seccion-tabla">
+                    <h4>📈 ACUMULADO POR UNIDAD</h4>
+                    <div class="tabla-container">
+                        <table id="tablaAcumulado">
+                            <thead><tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
+                            <tbody id="tbodyAcumulado"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME PARA EL COMANDO SUPERIOR</button>
             </div>
         </div>
     </div>
@@ -310,7 +355,6 @@
             "CAVEJB", "COLOG", "6TO CING"
         ];
         
-        // Correcciones automáticas
         const CORRECCIONES = {
             "11BRIG": "11 BRIGADA", "22BRIF": "22 BRIGADA", "31BRIG": "31 BRIGADA",
             "35BRIG": "35 BRIGADA", "51 BRINFS": "51 BRIGADA", "62BRIG": "62 BRIGADA",
@@ -320,9 +364,6 @@
         let registros = [];
         let miGrafica = null;
         
-        // ============================================================
-        // FUNCIONES
-        // ============================================================
         function getFechaHoy() { 
             return new Date().toISOString().split('T')[0]; 
         }
@@ -340,48 +381,34 @@
             return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
         }
         
-        // Obtener datos para la gráfica (últimos 7 días)
         function obtenerDatosGrafica() {
             const hoy = new Date();
             const ultimos7 = [];
             const datos = [];
-            
-            // Generar últimos 7 días (desde hace 6 días hasta hoy)
             for (let i = 6; i >= 0; i--) {
                 const fecha = new Date();
                 fecha.setDate(hoy.getDate() - i);
                 const fechaStr = fecha.toISOString().split('T')[0];
                 ultimos7.push(fechaStr);
             }
-            
-            // Calcular total de cédulas por día
             ultimos7.forEach(fecha => {
                 const totalDia = registros
                     .filter(r => r.fecha === fecha)
                     .reduce((sum, r) => sum + r.cedulas, 0);
                 datos.push(totalDia);
             });
-            
-            // Formatear etiquetas (DD/MM)
             const etiquetas = ultimos7.map(fecha => {
                 const d = new Date(fecha);
                 return `${d.getDate()}/${d.getMonth()+1}`;
             });
-            
             return { etiquetas, datos };
         }
         
-        // Actualizar gráfica
         function actualizarGrafica() {
             const canvas = document.getElementById('graficaAvance');
             if (!canvas) return;
-            
             const { etiquetas, datos } = obtenerDatosGrafica();
-            
-            if (miGrafica) {
-                miGrafica.destroy();
-            }
-            
+            if (miGrafica) miGrafica.destroy();
             miGrafica = new Chart(canvas, {
                 type: 'bar',
                 data: {
@@ -399,29 +426,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: { font: { size: 11 } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `Cédulas: ${context.raw.toLocaleString()}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Cédulas', font: { size: 11 } },
-                            ticks: { callback: function(value) { return value.toLocaleString(); } }
-                        },
-                        x: {
-                            title: { display: true, text: 'Fecha', font: { size: 11 } }
-                        }
-                    }
+                    plugins: { legend: { position: 'top', labels: { font: { size: 11 } } } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Cédulas', font: { size: 11 } } } }
                 }
             });
         }
@@ -433,8 +439,6 @@
             } else {
                 registros = [];
             }
-            
-            // Corregir nombres mal escritos
             let cambios = 0;
             registros = registros.map(r => {
                 if (CORRECCIONES[r.unidad]) {
@@ -443,12 +447,10 @@
                 }
                 return r;
             });
-            if (cambios > 0) {
-                guardarDatos();
-            }
-            
+            if (cambios > 0) guardarDatos();
             actualizarPaneles();
             actualizarGrafica();
+            console.log(`✅ Cargados ${registros.length} registros`);
         }
         
         function guardarDatos() {
@@ -460,9 +462,7 @@
         function obtenerUnidades() {
             let unidades = [...UNIDADES_BASE];
             registros.forEach(r => {
-                if (!unidades.includes(r.unidad)) {
-                    unidades.push(r.unidad);
-                }
+                if (!unidades.includes(r.unidad)) unidades.push(r.unidad);
             });
             return unidades.sort();
         }
@@ -470,10 +470,8 @@
         function actualizarSelectUnidad() {
             const select = document.getElementById('unidadAnalista');
             if (!select) return;
-            
             const unidades = obtenerUnidades();
             const valorActual = select.value;
-            
             select.innerHTML = '<option value="">-- Seleccione su unidad --</option>';
             unidades.forEach(u => {
                 const opt = document.createElement('option');
@@ -482,11 +480,7 @@
                 select.appendChild(opt);
             });
             select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
-            
-            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) {
-                select.value = valorActual;
-            }
-            
+            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) select.value = valorActual;
             const campoNueva = document.getElementById('campoNuevaUnidad');
             if (select.value === "OTRA_UNIDAD") {
                 campoNueva.classList.add('visible');
@@ -498,10 +492,8 @@
         
         function actualizarPaneles() {
             actualizarSelectUnidad();
-            
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
-            
             const acumulado = {};
             const analistasPorUnidad = {};
             registros.forEach(r => {
@@ -509,7 +501,6 @@
                 if (!analistasPorUnidad[r.unidad]) analistasPorUnidad[r.unidad] = new Set();
                 analistasPorUnidad[r.unidad].add(r.cedulaAnalista);
             });
-            
             const totalHoy = registrosHoy.reduce((s, r) => s + r.cedulas, 0);
             const totalAcum = Object.values(acumulado).reduce((s, v) => s + v, 0);
             
@@ -518,21 +509,22 @@
             document.getElementById('totalAcumulado').innerText = totalAcum;
             document.getElementById('diasTrabajados').innerText = new Set(registros.map(r => r.fecha)).size;
             
+            // TABLA TODOS LOS REGISTROS (con TODOS los datos)
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
                 if (ordenados.length === 0) {
-                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">Sin registros</td></tr>';
+                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros cargados</td></tr>';
                 } else {
                     tbodyTodos.innerHTML = ordenados.map((r, i) => `
                         <tr>
                             <td>${i+1}</td>
-                            <td>${formatearFecha(r.fecha)}</td>
-                            <td>${r.hora || '---'}</td>
-                            <td>${r.cedulaAnalista}</td>
+                            <td><strong>${formatearFecha(r.fecha)}</strong></td>
+                            <td>${r.hora || '--:--:--'}</td>
+                            <td><span class="badge-analista">${r.cedulaAnalista}</span></td>
                             <td>${r.unidad}</td>
                             <td>${r.libro}</td>
-                            <td><strong>${r.cedulas}</strong></td>
+                            <td><strong style="color:#28a745;">${r.cedulas}</strong></td>
                             <td>${r.observaciones || 'Ninguna'}</td>
                             <td><button class="btn-eliminar" onclick="eliminarRegistro(${i})">🗑️</button></td>
                         </tr>
@@ -540,28 +532,32 @@
                 }
             }
             
+            // TABLA REGISTROS DE HOY (con TODOS los datos)
             const tbodyHoy = document.getElementById('tbodyHoy');
             if (tbodyHoy) {
                 if (registrosHoy.length === 0) {
-                    tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
+                    tbodyHoy.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ No hay registros hoy</td></tr>';
                 } else {
                     tbodyHoy.innerHTML = registrosHoy.map(r => `
                         <tr>
+                            <td>${r.hora || '--:--:--'}</td>
                             <td>${r.cedulaAnalista}</td>
                             <td>${r.unidad}</td>
                             <td>${r.libro}</td>
-                            <td><strong>${r.cedulas}</strong></td>
+                            <td><strong style="color:#28a745;">${r.cedulas}</strong></td>
+                            <td>${r.observaciones || 'Ninguna'}</td>
                             <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
                         </tr>
                     `).join('');
                 }
             }
             
+            // TABLA ACUMULADO POR UNIDAD
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
                 if (unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin datos</td></tr>';
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
                 } else {
                     tbodyAcum.innerHTML = unidades.map(u => `
                         <tr>
@@ -576,9 +572,10 @@
         
         window.eliminarRegistro = function(index) {
             const registro = registros[index];
-            if (confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista})?`)) {
+            if (confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista}) del ${registro.fecha} a las ${registro.hora}?`)) {
                 registros.splice(index, 1);
                 guardarDatos();
+                alert('✅ Registro eliminado');
             }
         }
         
@@ -678,7 +675,7 @@
                     <h4>📋 Detalle por Unidad</h4>
                     <table style="width:100%">
                         <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
-                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
+                        <tbody>${Object.keys(detalle).sort().map(u => `<td>${u}</td>}<td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
                     </table>
                     <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px">
                         <p>Informe generado automáticamente<br>${new Date().toLocaleString()}</p>
@@ -690,9 +687,7 @@
             win.document.close();
         }
         
-        // ============================================================
-        // EVENTOS E INICIALIZACIÓN
-        // ============================================================
+        // EVENTOS
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
         document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
         document.getElementById('volverAnalista').addEventListener('click', volverInicio);
@@ -723,8 +718,8 @@
             const hora = getHora();
             
             if (libro && !/^\d{4}$/.test(libro)) {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos (Ej: 1983)</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
                 return;
             }
             
@@ -732,28 +727,36 @@
             if (unidad === "OTRA_UNIDAD") {
                 if (!nuevaUnidad) {
                     document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>';
-                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
                     return;
                 }
                 unidadFinal = nuevaUnidad;
             } else {
                 unidadFinal = unidad;
                 if (!unidadFinal) {
-                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>';
-                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad de la lista</div>';
+                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
                     return;
                 }
             }
             
             if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
                 return;
             }
             
             if (!/^\d+$/.test(cedula)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
+                return;
+            }
+            
+            // Verificar si ya existe registro duplicado (misma fecha, misma cédula, misma unidad)
+            const existe = registros.some(r => r.fecha === fecha && r.cedulaAnalista === cedula && r.unidad === unidadFinal);
+            if (existe) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Ya existe un registro suyo para esta unidad en esta fecha</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2500);
                 return;
             }
             
