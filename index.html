@@ -157,7 +157,7 @@
                         <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
                     </div>
 
-                    <!-- LISTA DE TODOS LOS REGISTROS INDIVIDUALES (ordenados del más nuevo al más antiguo) -->
+                    <!-- LISTA DE TODOS LOS REGISTROS INDIVIDUALES -->
                     <div class="seccion-tabla">
                         <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
                         <div class="tabla-container" style="max-height: 400px;">
@@ -330,15 +330,15 @@
             document.getElementById('totalAcumulado') && (document.getElementById('totalAcumulado').innerText = totalAcum);
             document.getElementById('diasTrabajados') && (document.getElementById('diasTrabajados').innerText = new Set(registros.map(r=>r.fecha)).size);
             
-            // TABLA DE TODOS LOS REGISTROS (ordenados del más nuevo al más antiguo)
+            // TABLA DE TODOS LOS REGISTROS
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if(tbodyTodos) {
-                const registrosOrdenados = [...registros].reverse(); // Más reciente primero
+                const registrosOrdenados = [...registros].reverse();
                 if(registrosOrdenados.length === 0) {
                     tbodyTodos.innerHTML = '<tr><td colspan="8" style="text-align:center">Sin registros</td></tr>';
                 } else {
                     tbodyTodos.innerHTML = registrosOrdenados.map((r, idx) => `
-                        <tr class="registro-item">
+                        <tr>
                             <td>${idx + 1}</td>
                             <td>${formatearFechaLegible(r.fecha)}</td>
                             <td>${r.cedulaAnalista}</td>
@@ -358,7 +358,7 @@
                 if(registrosHoy.length === 0) {
                     tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
                 } else {
-                    tbodyHoy.innerHTML = registrosHoy.map((r, idx) => `
+                    tbodyHoy.innerHTML = registrosHoy.map((r) => `
                         <tr>
                             <td>${r.cedulaAnalista}</td>
                             <td>${r.unidad}</td>
@@ -394,7 +394,7 @@
                 registros.splice(index, 1);
                 localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
                 actualizarPaneles();
-                alert('⚠️ Registro eliminado SOLO localmente. Para eliminarlo de la nube, contacte al administrador.');
+                alert('⚠️ Registro eliminado SOLO localmente.');
             }
         }
         
@@ -454,8 +454,10 @@
             win.document.close();
         }
         
+        // FORMULARIO ANALISTA - CORREGIDO (permite nueva unidad sin seleccionar de la lista)
         document.getElementById('formAnalista')?.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const fecha = document.getElementById('fechaAnalista').value;
             const cedulaAnalista = document.getElementById('cedulaAnalista').value.trim();
             let unidad = document.getElementById('unidadAnalista').value;
@@ -464,12 +466,27 @@
             const cedulas = parseInt(document.getElementById('cedulasAnalista').value);
             const observaciones = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             
-            if(nuevaUnidad) unidad = nuevaUnidad;
+            // 🔥 LÓGICA CORREGIDA 🔥
+            let unidadFinal = "";
             
-            if(!fecha || !cedulaAnalista || !unidad || !libro || !cedulas) {
+            if (nuevaUnidad !== "") {
+                // Si escribió una nueva unidad, usamos ESA
+                unidadFinal = nuevaUnidad;
+            } else {
+                // Si NO escribió nueva unidad, entonces debe seleccionar una de la lista
+                unidadFinal = unidad;
+                if (!unidadFinal) {
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad de la lista o escriba una nueva</div>';
+                    return;
+                }
+            }
+            
+            // Validaciones básicas
+            if(!fecha || !cedulaAnalista || !unidadFinal || !libro || !cedulas) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
                 return;
             }
+            
             if(!/^\d+$/.test(cedulaAnalista)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
                 return;
@@ -477,7 +494,7 @@
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
             
-            const exito = await guardarEnNube({fecha, cedulaAnalista, unidad, libro, cedulas, observaciones});
+            const exito = await guardarEnNube({fecha, cedulaAnalista, unidad: unidadFinal, libro, cedulas, observaciones});
             
             if(exito) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado a la nube!</div>';
@@ -485,6 +502,7 @@
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
             }
             
+            // Limpiar formulario
             document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidad').value = '';
