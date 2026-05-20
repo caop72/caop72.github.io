@@ -7,464 +7,669 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             min-height: 100vh;
             padding: 16px;
         }
         .container { max-width: 1400px; margin: 0 auto; }
-        .access-cards { display: flex; gap: 20px; justify-content: center; align-items: center; min-height: 85vh; flex-wrap: wrap; }
+        
+        /* Tarjetas de inicio */
+        .access-cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            min-height: 85vh;
+            flex-wrap: wrap;
+        }
         .card {
-            background: rgba(255,255,255,0.95); border-radius: 24px; padding: 35px 25px; text-align: center;
-            cursor: pointer; transition: all 0.3s ease; flex: 1; min-width: 260px; max-width: 350px;
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            flex: 1;
+            min-width: 260px;
+            max-width: 350px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .card:hover { transform: translateY(-8px); }
         .card-analista { border-top: 8px solid #4CAF50; }
         .card-operador { border-top: 8px solid #FF9800; }
         .card h2 { margin-bottom: 12px; color: #1e3c72; font-size: 26px; }
-        .card p { color: #555; margin-bottom: 20px; font-size: 15px; }
+        .card p { color: #555; margin-bottom: 20px; }
         .card button {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: white; border: none; padding: 12px 30px; border-radius: 40px;
-            cursor: pointer; font-size: 16px; font-weight: 600; width: 100%;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
         }
+        
+        /* Paneles */
         .panel {
-            background: white; border-radius: 24px; padding: 20px;
-            display: none; animation: fadeIn 0.3s ease; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            display: none;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .panel-activo { display: block; }
+        
         .header-panel {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;
-            flex-wrap: wrap; gap: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 12px;
         }
         .header-panel h2 { color: #1e3c72; font-size: 20px; }
-        .btn-volver { background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; font-size: 14px; }
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        /* Formulario */
         .form-analista { background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
         .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e3c72; font-size: 14px; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; font-size: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e3c72; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 12px;
+            font-size: 16px;
+        }
         button[type="submit"] {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white; border: none; padding: 14px; border-radius: 12px;
-            cursor: pointer; font-size: 16px; font-weight: 600; width: 100%;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
         }
-        .fecha-actual-operador {
-            background: #eef2ff; padding: 12px 16px; border-radius: 16px;
-            text-align: center; margin-bottom: 20px; font-weight: bold; color: #1e3c72; font-size: 18px;
-        }
+        
+        /* Estadísticas */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 25px;
         }
-        .stat-card { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 16px; border-radius: 16px; text-align: center; }
+        .stat-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+        }
         .stat-number { font-size: 28px; font-weight: bold; }
-        .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
+        .stat-label { font-size: 11px; opacity: 0.9; }
+        
+        /* Tablas */
         .seccion-tabla { margin-bottom: 25px; }
-        .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; font-size: 18px; }
+        .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
         .tabla-container { overflow-x: auto; max-height: 300px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #1e3c72; color: white; font-weight: 600; position: sticky; top: 0; }
-        .btn-eliminar { background: #dc3545; color: white; border: none; padding: 4px 10px; border-radius: 12px; cursor: pointer; font-size: 11px; }
+        th { background: #1e3c72; color: white; position: sticky; top: 0; }
+        .btn-eliminar {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
         .btn-generar-informe {
             background: linear-gradient(135deg, #ff9800 0%, #f44336 100%);
-            color: white; border: none; padding: 16px; border-radius: 16px;
-            cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; margin-top: 10px;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 100%;
         }
+        
+        /* Acceso */
         .password-area { text-align: center; padding: 30px 20px; }
-        .password-area input { padding: 14px; width: 100%; max-width: 280px; margin: 15px 0; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; text-align: center; }
-        .mensaje-exito { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; font-size: 14px; }
-        .mensaje-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; font-size: 14px; }
+        .password-area input {
+            padding: 14px;
+            width: 100%;
+            max-width: 280px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .mensaje-exito { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        .mensaje-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        
         .campo-nueva-unidad { display: none; }
         .campo-nueva-unidad.visible { display: block; }
+        
         @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat-number { font-size: 24px; }
-            th, td { font-size: 11px; padding: 8px 4px; }
-            .fecha-actual-operador { font-size: 14px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="pantallaPresentacion" class="access-cards">
-            <div class="card card-analista" onclick="mostrarPanel('analista')">
+        <!-- PANTALLA DE INICIO -->
+        <div id="pantallaInicio" class="access-cards">
+            <div class="card card-analista" id="btnAnalista">
                 <h2>📱 ANALISTA</h2>
                 <p>Registra tu digitalización diaria</p>
                 <button>Ingresar</button>
             </div>
-            <div class="card card-operador" onclick="mostrarPanel('operador')">
+            <div class="card card-operador" id="btnOperador">
                 <h2>👨‍💼 OPERADOR PRINCIPAL</h2>
                 <p>Control y generación de informes</p>
                 <button>Acceder</button>
             </div>
         </div>
 
+        <!-- PANEL ANALISTA -->
         <div id="panelAnalista" class="panel">
             <div class="header-panel">
                 <h2>📝 REGISTRO PARA ANALISTAS</h2>
-                <button class="btn-volver" onclick="volverInicio()">← Volver</button>
+                <button class="btn-volver" id="volverAnalista">← Volver</button>
             </div>
             <div class="form-analista">
                 <form id="formAnalista">
-                    <div class="form-group"><label>📅 Fecha:</label><input type="date" id="fechaAnalista" required></div>
-                    <div class="form-group"><label>🆔 Tu cédula:</label><input type="text" id="cedulaAnalista" placeholder="Ej: 12345678" required></div>
-                    <div class="form-group"><label>🏢 Unidad:</label><select id="unidadAnalista" required><option value="">-- Seleccione --</option></select></div>
-                    <div class="form-group campo-nueva-unidad" id="campoNuevaUnidad"><label>✏️ Nueva unidad:</label><input type="text" id="nuevaUnidadTexto" placeholder="Ej: 100 BRIGADA"></div>
-                    <div class="form-group"><label>📖 Año del Libro:</label><input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required></div>
-                    <div class="form-group"><label>🔢 Cédulas HOY:</label><input type="number" id="cedulasAnalista" placeholder="Cantidad" required></div>
-                    <div class="form-group"><label>📝 Observaciones:</label><input type="text" id="observacionesAnalista" placeholder="Ninguna"></div>
+                    <div class="form-group">
+                        <label>📅 Fecha:</label>
+                        <input type="date" id="fechaAnalista" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🆔 Tu cédula:</label>
+                        <input type="text" id="cedulaAnalista" placeholder="Ej: 12345678" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🏢 Unidad:</label>
+                        <select id="unidadAnalista" required>
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+                    <div class="form-group campo-nueva-unidad" id="campoNuevaUnidad">
+                        <label>✏️ Nueva unidad:</label>
+                        <input type="text" id="nuevaUnidadTexto" placeholder="Ej: 100 BRIGADA">
+                    </div>
+                    <div class="form-group">
+                        <label>📖 Año del Libro:</label>
+                        <input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔢 Cédulas HOY:</label>
+                        <input type="number" id="cedulasAnalista" placeholder="Cantidad" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📝 Observaciones:</label>
+                        <input type="text" id="observacionesAnalista" placeholder="Ninguna">
+                    </div>
                     <button type="submit">✅ ENVIAR REGISTRO</button>
                 </form>
                 <div id="mensajeAnalista"></div>
             </div>
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px; margin-top: 15px;">
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px;">
                 <strong>📌 Instrucciones:</strong><br>
                 • Registre solo el trabajo de hoy<br>
-                • En caso de dudas, comuníquese con el Cnel. César Augusto Ontivero Pérez<br>
-                • Remita los datos de las cédulas al correo reservamovilizacion2026@gmail.com
+                • En caso de dudas, comuníquese con el Cnel. César Augusto Ontivero Pérez
             </div>
         </div>
 
+        <!-- PANEL OPERADOR -->
         <div id="panelOperador" class="panel">
             <div class="header-panel">
                 <h2>🔐 OPERADOR PRINCIPAL</h2>
-                <button class="btn-volver" onclick="volverInicio()">← Volver</button>
+                <button class="btn-volver" id="volverOperador">← Volver</button>
             </div>
             <div id="passwordOperador" class="password-area">
                 <h3>🔒 Acceso autorizado</h3>
                 <input type="password" id="claveOperador" placeholder="Clave de acceso">
-                <button onclick="verificarClaveOperador()" style="width: auto; padding: 12px 30px;">Ingresar</button>
+                <button id="btnIngresarOperador">Ingresar</button>
             </div>
             <div id="contenidoOperador" style="display: none;">
-                <div class="fecha-actual-operador" id="fechaActualOperador">📅 Cargando...</div>
                 <div class="stats-grid">
-                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">REGISTROS TOTALES</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
-                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">TOTAL</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">HOY</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">ACUMULADO</div></div>
+                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS</div></div>
                 </div>
-                <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container" style="max-height: 400px;"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Observaciones</th><th>Acción</th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
-                <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Acción</th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
-                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></tr></div></div>
-                <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">📄 GENERAR INFORME</button>
+                <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Obs</th><th></th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
+                <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th></th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
+                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
+                <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME</button>
             </div>
         </div>
     </div>
 
     <script>
+        // ============================================================
+        // CONFIGURACIÓN
+        // ============================================================
         const CLAVE_OPERADOR = "R2026";
         
-        // ========== NOMBRES INCORRECTOS QUE NO DEBEN APARECER EN LA LISTA ==========
-        const NOMBRES_EXCLUIDOS = [
-            "11 BRIG", "32 BRIG", "23 BRIG", "51 BRIG", "82 BRIG", 
-            "92 BRIG", "62 BRIG", "35 BRIG", "31 BRIG", "94 BRIG",
-            "11BRIG", "22BRIF", "31BRIG", "35BRIG", "51 BRINFS",
-            "62BRIG", "82BRIG", "92BRIG", "94BRIG", "TRINIG"
+        const UNIDADES_BASE = [
+            "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
+            "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
+            "31 BRIGADA", "32 BRIGADA", "33 BRIGADA", "35 BRIGADA",
+            "41 BRIGADA", "42 BRIGADA", "43 BRIGADA",
+            "51 BRIGADA", "52 BRIGADA", "53 BRIGADA",
+            "61 BRIGADA", "62 BRIGADA", "63 BRIGADA", "64 BRIGADA",
+            "81 BRIGADA", "82 BRIGADA", "83 BRIGADA",
+            "91 BRIGADA", "92 BRIGADA", "93 BRIGADA", "94 BRIGADA", "99 BRIGADA",
+            "CAVEJB", "COLOG", "6TO CING"
         ];
         
-        // ========== TABLA DE CORRECCIONES ==========
-        const CORRECCIONES_UNIDADES = {
-            "11BRIG": "11 BRIGADA",
-            "22BRIF": "22 BRIGADA",
-            "31BRIG": "31 BRIGADA",
-            "35BRIG": "35 BRIGADA",
-            "51 BRINFS": "51 BRIGADA",
-            "62BRIG": "62 BRIGADA",
-            "82BRIG": "82 BRIGADA",
-            "92BRIG": "92 BRIGADA",
-            "94BRIG": "94 BRIGADA",
-            "TRINIG": "?? BRIGADA"
+        // Correcciones automáticas
+        const CORRECCIONES = {
+            "11BRIG": "11 BRIGADA", "22BRIF": "22 BRIGADA", "31BRIG": "31 BRIGADA",
+            "35BRIG": "35 BRIGADA", "51 BRINFS": "51 BRIGADA", "62BRIG": "62 BRIGADA",
+            "82BRIG": "82 BRIGADA", "92BRIG": "92 BRIGADA", "94BRIG": "94 BRIGADA"
         };
         
-        const UNIDADES_BASE = ["11 BRIGADA","12 BRIGADA","13 BRIGADA","14 BRIGADA","21 BRIGADA","22 BRIGADA","25 BRIGADA","31 BRIGADA","32 BRIGADA","33 BRIGADA","35 BRIGADA","41 BRIGADA","42 BRIGADA","43 BRIGADA","51 BRIGADA","52 BRIGADA","53 BRIGADA","61 BRIGADA","62 BRIGADA","63 BRIGADA","64 BRIGADA","81 BRIGADA","82 BRIGADA","83 BRIGADA","91 BRIGADA","92 BRIGADA","93 BRIGADA","94 BRIGADA","99 BRIGADA","CAVEJB","COLOG","6TO CING"];
-        
+        // Datos
         let registros = [];
         
-        // Función para corregir unidades en los registros existentes
-        function corregirUnidadesExistentes() {
-            let cambios = 0;
-            registros = registros.map(reg => {
-                let nombreOriginal = reg.unidad;
-                let nombreCorregido = CORRECCIONES_UNIDADES[nombreOriginal];
-                if (nombreCorregido && nombreCorregido !== nombreOriginal) {
-                    cambios++;
-                    return { ...reg, unidad: nombreCorregido };
-                }
-                return reg;
-            });
-            if (cambios > 0) {
-                guardarDatos();
-                console.log(`✅ Se corrigieron ${cambios} registros automáticamente`);
-            }
+        // ============================================================
+        // FUNCIONES
+        // ============================================================
+        function getFechaHoy() { 
+            return new Date().toISOString().split('T')[0]; 
         }
         
-        // Obtener unidades válidas (excluyendo las mal escritas)
-        function obtenerUnidadesValidas() {
-            // Unidades de la lista base
-            let unidadesValidas = [...UNIDADES_BASE];
-            
-            // Agregar unidades de registros que NO estén en la lista de excluidos
-            const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
-            unidadesDeRegistros.forEach(u => {
-                if (!NOMBRES_EXCLUIDOS.includes(u) && !unidadesValidas.includes(u)) {
-                    unidadesValidas.push(u);
-                }
-            });
-            
-            return unidadesValidas.sort();
+        function getHora() { 
+            const d = new Date(); 
+            return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; 
         }
         
-        function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
-        function formatearHora() { const ahora = new Date(); return `${String(ahora.getHours()).padStart(2,'0')}:${String(ahora.getMinutes()).padStart(2,'0')}:${String(ahora.getSeconds()).padStart(2,'0')}`; }
-        function formatearFechaLegible(fechaStr) { if(!fechaStr) return '---'; const fecha = new Date(fechaStr); const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; }
-        function formatearFechaActual() { const hoy = new Date(); const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; }
+        function formatearFecha(fechaStr) {
+            if (!fechaStr) return '---';
+            const d = new Date(fechaStr);
+            const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
+            const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+            return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]} ${d.getFullYear()}`;
+        }
         
         function cargarDatos() {
-            const datosGuardados = localStorage.getItem('digitalizacion_registros');
-            if (datosGuardados) {
-                try {
-                    registros = JSON.parse(datosGuardados);
-                } catch(e) { registros = []; }
+            const data = localStorage.getItem('digitalizacion_registros');
+            if (data) {
+                registros = JSON.parse(data);
             } else {
                 registros = [];
             }
-            corregirUnidadesExistentes();
+            
+            // Corregir nombres mal escritos
+            let cambios = 0;
+            registros = registros.map(r => {
+                if (CORRECCIONES[r.unidad]) {
+                    cambios++;
+                    return { ...r, unidad: CORRECCIONES[r.unidad] };
+                }
+                return r;
+            });
+            if (cambios > 0) {
+                guardarDatos();
+            }
+            
             actualizarPaneles();
-            console.log(`✅ Cargados ${registros.length} registros`);
         }
         
         function guardarDatos() {
             localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
-            console.log(`💾 Guardados ${registros.length} registros`);
+            actualizarPaneles();
         }
         
-        function actualizarUnidades() {
-            const unidadesValidas = obtenerUnidadesValidas();
+        function obtenerUnidades() {
+            let unidades = [...UNIDADES_BASE];
+            registros.forEach(r => {
+                if (!unidades.includes(r.unidad)) {
+                    unidades.push(r.unidad);
+                }
+            });
+            return unidades.sort();
+        }
+        
+        function actualizarSelectUnidad() {
             const select = document.getElementById('unidadAnalista');
-            if(select) {
-                const actual = select.value;
-                select.innerHTML = '<option value="">-- Seleccione su unidad --</option>';
-                unidadesValidas.forEach(u => { 
-                    const opt = document.createElement('option'); 
-                    opt.value = u; 
-                    opt.textContent = u; 
-                    select.appendChild(opt); 
-                });
-                select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
-                if(actual && (unidadesValidas.includes(actual) || actual === "OTRA_UNIDAD")) select.value = actual;
+            if (!select) return;
+            
+            const unidades = obtenerUnidades();
+            const valorActual = select.value;
+            
+            select.innerHTML = '<option value="">-- Seleccione su unidad --</option>';
+            unidades.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                select.appendChild(opt);
+            });
+            select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
+            
+            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) {
+                select.value = valorActual;
             }
-            const selectUnidad = document.getElementById('unidadAnalista');
+            
+            // Mostrar/ocultar campo de nueva unidad
             const campoNueva = document.getElementById('campoNuevaUnidad');
-            if(selectUnidad && campoNueva) {
-                if(selectUnidad.value === "OTRA_UNIDAD") campoNueva.classList.add('visible');
-                else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
+            if (select.value === "OTRA_UNIDAD") {
+                campoNueva.classList.add('visible');
+            } else {
+                campoNueva.classList.remove('visible');
+                document.getElementById('nuevaUnidadTexto').value = '';
             }
         }
         
         function actualizarPaneles() {
-            actualizarUnidades();
-            const fechaDiv = document.getElementById('fechaActualOperador');
-            if(fechaDiv) fechaDiv.innerHTML = `📅 ${formatearFechaActual()}`;
+            actualizarSelectUnidad();
             
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
+            
+            // Acumulados
             const acumulado = {};
             const analistasPorUnidad = {};
-            registros.forEach(r => { 
-                acumulado[r.unidad] = (acumulado[r.unidad] || 0) + r.cedulas; 
-                if(!analistasPorUnidad[r.unidad]) analistasPorUnidad[r.unidad] = new Set();
+            registros.forEach(r => {
+                acumulado[r.unidad] = (acumulado[r.unidad] || 0) + r.cedulas;
+                if (!analistasPorUnidad[r.unidad]) analistasPorUnidad[r.unidad] = new Set();
                 analistasPorUnidad[r.unidad].add(r.cedulaAnalista);
             });
             
-            const totalHoy = registrosHoy.reduce((s,r) => s + r.cedulas, 0);
-            const totalAcum = Object.values(acumulado).reduce((s,v) => s + v, 0);
+            const totalHoy = registrosHoy.reduce((s, r) => s + r.cedulas, 0);
+            const totalAcum = Object.values(acumulado).reduce((s, v) => s + v, 0);
             
-            document.getElementById('totalRegistros') && (document.getElementById('totalRegistros').innerText = registros.length);
-            document.getElementById('totalHoy') && (document.getElementById('totalHoy').innerText = totalHoy);
-            document.getElementById('totalAcumulado') && (document.getElementById('totalAcumulado').innerText = totalAcum);
-            document.getElementById('diasTrabajados') && (document.getElementById('diasTrabajados').innerText = new Set(registros.map(r=>r.fecha)).size);
+            // Actualizar estadísticas
+            document.getElementById('totalRegistros').innerText = registros.length;
+            document.getElementById('totalHoy').innerText = totalHoy;
+            document.getElementById('totalAcumulado').innerText = totalAcum;
+            document.getElementById('diasTrabajados').innerText = new Set(registros.map(r => r.fecha)).size;
             
+            // Tabla TODOS los registros
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
-            if(tbodyTodos) {
-                const registrosOrdenados = [...registros].reverse();
-                if(registrosOrdenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">Sin registros</td>'';
-                else tbodyTodos.innerHTML = registrosOrdenados.map((r, idx) => `
-                    <tr>
-                        <td>${idx+1}</td>
-                        <td>${formatearFechaLegible(r.fecha)}</td>
-                        <td>${r.hora || '--:--:--'}</td>
-                        <td>${r.cedulaAnalista}</td>
-                        <td>${r.unidad}</td>
-                        <td>${r.libro}</td>
-                        <td><strong>${r.cedulas}</strong></td>
-                        <td>${r.observaciones || 'Ninguna'}</td>
-                        <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
-                    </tr>
-                `).join('');
+            if (tbodyTodos) {
+                const ordenados = [...registros].reverse();
+                if (ordenados.length === 0) {
+                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">Sin registros</td></tr>';
+                } else {
+                    tbodyTodos.innerHTML = ordenados.map((r, i) => `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${formatearFecha(r.fecha)}</td>
+                            <td>${r.hora || '---'}</td>
+                            <td>${r.cedulaAnalista}</td>
+                            <td>${r.unidad}</td>
+                            <td>${r.libro}</td>
+                            <td><strong>${r.cedulas}</strong></td>
+                            <td>${r.observaciones || 'Ninguna'}</td>
+                            <td><button class="btn-eliminar" onclick="eliminarRegistro(${i})">🗑️</button></td>
+                        </tr>
+                    `).join('');
+                }
             }
             
+            // Tabla REGISTROS DE HOY
             const tbodyHoy = document.getElementById('tbodyHoy');
-            if(tbodyHoy) {
-                if(registrosHoy.length === 0) tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td>'';
-                else tbodyHoy.innerHTML = registrosHoy.map((r) => `
-                    <tr>
-                        <td>${r.cedulaAnalista}</td>
-                        <td>${r.unidad}</td>
-                        <td>${r.libro}</td>
-                        <td><strong>${r.cedulas}</strong></td>
-                        <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
-                    </tr>
-                `).join('');
+            if (tbodyHoy) {
+                if (registrosHoy.length === 0) {
+                    tbodyHoy.innerHTML = '<tr><td colspan="5" style="text-align:center">Sin registros hoy</td></tr>';
+                } else {
+                    tbodyHoy.innerHTML = registrosHoy.map(r => `
+                        <tr>
+                            <td>${r.cedulaAnalista}</td>
+                            <td>${r.unidad}</td>
+                            <td>${r.libro}</td>
+                            <td><strong>${r.cedulas}</strong></td>
+                            <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
+                        </tr>
+                    `).join('');
+                }
             }
             
+            // Tabla ACUMULADO POR UNIDAD
             const tbodyAcum = document.getElementById('tbodyAcumulado');
-            if(tbodyAcum) {
+            if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
-                if(unidades.length === 0) tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td>'';
-                else tbodyAcum.innerHTML = unidades.map(u => `
-                    <tr>
-                        <td>${u}</td>
-                        <td><strong>${acumulado[u]}</strong></td>
-                        <td>${analistasPorUnidad[u].size} analista(s)</td>
-                    </tr>
-                `).join('');
+                if (unidades.length === 0) {
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin datos</td></tr>';
+                } else {
+                    tbodyAcum.innerHTML = unidades.map(u => `
+                        <tr>
+                            <td>${u}</td>
+                            <td><strong>${acumulado[u]}</strong></td>
+                            <td>${analistasPorUnidad[u].size} analista(s)</td>
+                        </tr>
+                    `).join('');
+                }
             }
         }
         
         window.eliminarRegistro = function(index) {
             const registro = registros[index];
-            if(registro && confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista})?`)) {
+            if (confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista})?`)) {
                 registros.splice(index, 1);
                 guardarDatos();
-                actualizarPaneles();
-                alert('✅ Registro eliminado');
             }
         }
         
-        function mostrarPanel(tipo) {
-            document.getElementById('pantallaPresentacion').style.display = 'none';
-            if(tipo === 'analista') {
-                document.getElementById('panelAnalista').classList.add('panel-activo');
-                document.getElementById('fechaAnalista').value = getFechaHoy();
-                ['cedulaAnalista','nuevaUnidadTexto','libroAnalista','cedulasAnalista','observacionesAnalista'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
-                document.getElementById('unidadAnalista').value = '';
-                actualizarUnidades();
-            } else {
-                document.getElementById('panelOperador').classList.add('panel-activo');
-                document.getElementById('passwordOperador').style.display = 'block';
-                document.getElementById('contenidoOperador').style.display = 'none';
-                document.getElementById('claveOperador').value = '';
-            }
+        function mostrarAnalista() {
+            document.getElementById('pantallaInicio').style.display = 'none';
+            document.getElementById('panelAnalista').classList.add('panel-activo');
+            document.getElementById('fechaAnalista').value = getFechaHoy();
+            document.getElementById('cedulaAnalista').value = '';
+            document.getElementById('unidadAnalista').value = '';
+            document.getElementById('nuevaUnidadTexto').value = '';
+            document.getElementById('libroAnalista').value = '';
+            document.getElementById('cedulasAnalista').value = '';
+            document.getElementById('observacionesAnalista').value = '';
+            actualizarSelectUnidad();
+        }
+        
+        function mostrarOperador() {
+            document.getElementById('pantallaInicio').style.display = 'none';
+            document.getElementById('panelOperador').classList.add('panel-activo');
+            document.getElementById('passwordOperador').style.display = 'block';
+            document.getElementById('contenidoOperador').style.display = 'none';
+            document.getElementById('claveOperador').value = '';
         }
         
         function volverInicio() {
-            document.getElementById('pantallaPresentacion').style.display = 'flex';
+            document.getElementById('pantallaInicio').style.display = 'flex';
             document.getElementById('panelAnalista').classList.remove('panel-activo');
             document.getElementById('panelOperador').classList.remove('panel-activo');
         }
         
-        function verificarClaveOperador() {
-            if(document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
+        function ingresarOperador() {
+            const clave = document.getElementById('claveOperador').value;
+            if (clave === CLAVE_OPERADOR) {
                 document.getElementById('passwordOperador').style.display = 'none';
                 document.getElementById('contenidoOperador').style.display = 'block';
                 cargarDatos();
-            } else alert('❌ Clave incorrecta');
+            } else {
+                alert('❌ Clave incorrecta');
+            }
         }
         
-        function generarInformeEjecutivo() {
+        function generarInforme() {
             const ahora = new Date();
             const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-            const fechaCorta = `${String(ahora.getDate()).padStart(2,'0')} ${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
+            const fechaCorta = `${ahora.getDate().toString().padStart(2,'0')} ${meses[ahora.getMonth()]} ${ahora.getFullYear()}`;
             const hoy = getFechaHoy();
-            const totalHoy = registros.filter(r=>r.fecha===hoy).reduce((s,r)=>s+r.cedulas,0);
+            const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + r.cedulas, 0);
             let totalAcum = 0;
-            const unidadesSet = new Set();
-            const analistasSet = new Set();
-            registros.forEach(r => { totalAcum += r.cedulas; unidadesSet.add(r.unidad); analistasSet.add(r.cedulaAnalista); });
+            const unidades = new Set();
+            const analistas = new Set();
+            registros.forEach(r => {
+                totalAcum += r.cedulas;
+                unidades.add(r.unidad);
+                analistas.add(r.cedulaAnalista);
+            });
             const detalle = {};
-            registros.forEach(r => { detalle[r.unidad] = (detalle[r.unidad]||0) + r.cedulas; });
+            registros.forEach(r => { detalle[r.unidad] = (detalle[r.unidad] || 0) + r.cedulas; });
+            
             const win = window.open();
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe Digitalización</title><style>
-                body{font-family:system-ui;background:#f0f2f5;padding:16px;margin:0}.informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,0.12)}.header{text-align:center}.fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}.resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin-bottom:24px}.numero-grande{font-size:34px;font-weight:800;color:#ff9800}.indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;flex-wrap:wrap;gap:12px}.indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}.indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}th{background:#1e3c72;color:white;padding:12px}td{padding:10px;border-bottom:1px solid #eee}</style></head><body>
-                <div class="informe"><div class="header"><h1>📊 INFORME PERIÓDICO DEL AVANCE</h1><h2>Jornada de Digitalización de la Reserva Militar</h2><div class="fecha-informe">📅 ${fechaCorta}</div></div>
-                <div class="resumen"><p>🔹 <strong>RESUMEN EJECUTIVO</strong></p><p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en <strong>total</strong>, siendo hoy procesadas <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p></div>
-                <div class="indicadores"><div class="indicador"><div class="indicador-valor">${unidadesSet.size}</div><div class="indicador-label">UNIDADES</div></div><div class="indicador"><div class="indicador-valor">${analistasSet.size}</div><div class="indicador-label">ANALISTAS</div></div><div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div class="indicador-label">DÍAS</div></div><div class="indicador"><div class="indicador-valor">${registros.length}</div><div class="indicador-label">REPORTES</div></div></div>
-                <h4>📋 Detalle por Unidad</h4> <table><thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead><tbody>${Object.keys(detalle).sort().map(u=>`<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody></table>
-                <div class="footer"><p>Informe generado automáticamente<br>${new Date().toLocaleString()}</p></div></div>
-                <script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
+            win.document.write(`<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>Informe Digitalización</title>
+                <style>
+                    body{font-family:system-ui;background:#f0f2f5;padding:16px;margin:0}
+                    .informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px}
+                    .header{text-align:center}
+                    .fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}
+                    .resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin:20px 0}
+                    .numero-grande{font-size:34px;font-weight:800;color:#ff9800}
+                    .indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap}
+                    .indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}
+                    .indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}
+                    th{background:#1e3c72;color:white;padding:12px}
+                    td{padding:10px;border-bottom:1px solid #eee}
+                </style>
+            </head>
+            <body>
+                <div class="informe">
+                    <div class="header">
+                        <h1>📊 INFORME PERIÓDICO DEL AVANCE</h1>
+                        <h2>Jornada de Digitalización de la Reserva Militar</h2>
+                        <div class="fecha-informe">📅 ${fechaCorta}</div>
+                    </div>
+                    <div class="resumen">
+                        <p>🔹 <strong>RESUMEN EJECUTIVO</strong></p>
+                        <p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en <strong>total</strong>, siendo hoy procesadas <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p>
+                    </div>
+                    <div class="indicadores">
+                        <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
+                        <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div>DÍAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${registros.length}</div><div>REPORTES</div></div>
+                    </div>
+                    <h4>📋 Detalle por Unidad</h4>
+                    <table style="width:100%">
+                        <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
+                    </table>
+                    <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px">
+                        <p>Informe generado automáticamente<br>${new Date().toLocaleString()}</p>
+                    </div>
+                </div>
+                <script>setTimeout(()=>window.print(),500);<\/script>
+            </body>
+            </html>`);
             win.document.close();
         }
         
-        document.getElementById('unidadAnalista')?.addEventListener('change', () => actualizarUnidades());
+        // ============================================================
+        // EVENTOS Y INICIALIZACIÓN
+        // ============================================================
+        document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
+        document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
+        document.getElementById('volverAnalista').addEventListener('click', volverInicio);
+        document.getElementById('volverOperador').addEventListener('click', volverInicio);
+        document.getElementById('btnIngresarOperador').addEventListener('click', ingresarOperador);
+        document.getElementById('btnGenerarInforme').addEventListener('click', generarInforme);
         
-        document.getElementById('formAnalista')?.addEventListener('submit', function(e) {
+        document.getElementById('unidadAnalista').addEventListener('change', function() {
+            const campoNueva = document.getElementById('campoNuevaUnidad');
+            if (this.value === "OTRA_UNIDAD") {
+                campoNueva.classList.add('visible');
+            } else {
+                campoNueva.classList.remove('visible');
+                document.getElementById('nuevaUnidadTexto').value = '';
+            }
+        });
+        
+        document.getElementById('formAnalista').addEventListener('submit', function(e) {
             e.preventDefault();
+            
             const fecha = document.getElementById('fechaAnalista').value;
-            const cedulaAnalista = document.getElementById('cedulaAnalista').value.trim();
+            const cedula = document.getElementById('cedulaAnalista').value.trim();
             let unidad = document.getElementById('unidadAnalista').value;
-            const nuevaUnidadTexto = document.getElementById('nuevaUnidadTexto').value.trim().toUpperCase();
+            const nuevaUnidad = document.getElementById('nuevaUnidadTexto').value.trim().toUpperCase();
             const libro = document.getElementById('libroAnalista').value.trim();
             const cedulas = parseInt(document.getElementById('cedulasAnalista').value);
-            const observaciones = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
-            const hora = formatearHora();
+            const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
+            const hora = getHora();
             
-            if(libro && !/^\d{4}$/.test(libro)) { 
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>'; 
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
-                return; 
+            // Validar año
+            if (libro && !/^\d{4}$/.test(libro)) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                return;
             }
             
+            // Determinar unidad final
             let unidadFinal = "";
-            if(unidad === "OTRA_UNIDAD") {
-                if(!nuevaUnidadTexto) { 
+            if (unidad === "OTRA_UNIDAD") {
+                if (!nuevaUnidad) {
                     document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>';
-                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
-                    return; 
+                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                    return;
                 }
-                unidadFinal = nuevaUnidadTexto;
+                unidadFinal = nuevaUnidad;
             } else {
                 unidadFinal = unidad;
-                if(!unidadFinal) { 
+                if (!unidadFinal) {
                     document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>';
-                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
-                    return; 
+                    setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                    return;
                 }
             }
             
-            if(!fecha || !cedulaAnalista || !unidadFinal || !libro || !cedulas) { 
+            // Validaciones básicas
+            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
-                return; 
-            }
-            if(!/^\d+$/.test(cedulaAnalista)) { 
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
-                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
-                return; 
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                return;
             }
             
-            registros.push({fecha, cedulaAnalista, unidad: unidadFinal, libro, cedulas, observaciones, hora});
+            if (!/^\d+$/.test(cedula)) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                return;
+            }
+            
+            // Guardar
+            registros.push({ fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora });
             guardarDatos();
             
-            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado!</div>';
+            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado exitosamente!</div>';
             
+            // Limpiar formulario
+            document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidadTexto').value = '';
             document.getElementById('libroAnalista').value = '';
             document.getElementById('cedulasAnalista').value = '';
             document.getElementById('observacionesAnalista').value = '';
             document.getElementById('campoNuevaUnidad').classList.remove('visible');
-            actualizarUnidades();
-            setTimeout(() => { const msg = document.getElementById('mensajeAnalista'); if(msg) msg.innerHTML = ''; }, 3000);
+            
+            actualizarSelectUnidad();
+            setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
         });
         
         cargarDatos();
-        actualizarUnidades();
     </script>
 </body>
 </html>
