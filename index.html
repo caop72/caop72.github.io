@@ -145,7 +145,7 @@
                         <input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required>
                     </div>
                     <div class="form-group">
-                        <label>🔢 Cédulas hoy:</label>
+                        <label>🔢 Cédulas digitalizadas HOY:</label>
                         <input type="number" id="cedulasAnalista" placeholder="Cantidad" required>
                     </div>
                     <div class="form-group">
@@ -157,19 +157,19 @@
                 <div id="mensajeAnalista"></div>
             </div>
 
-            <!-- MIS REGISTROS (para que el analista vea su historial) -->
+            <!-- MIS REGISTROS -->
             <div class="mis-registros" id="misRegistros" style="display: none;">
                 <h4>📋 MIS REGISTROS</h4>
                 <div class="tabla-container" style="max-height: 200px;">
                     <table style="width: 100%;">
                         <thead>
-                            <tr><th>Fecha</th><th>Hora</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Acumulado</th></tr>
+                            <tr><th>Fecha</th><th>Hora</th><th>Unidad</th><th>Año</th><th>HOY</th><th>ACUMULADO</th></tr>
                         </thead>
                         <tbody id="tbodyMisRegistros"></tbody>
                     </table>
                 </div>
                 <div style="margin-top: 10px; text-align: right;">
-                    <strong>Total cargado por usted:</strong> <span id="totalAnalista" class="total-analista">0</span> cédulas
+                    <strong>Total acumulado por usted:</strong> <span id="totalAnalista" class="total-analista">0</span> cédulas
                 </div>
             </div>
 
@@ -231,7 +231,7 @@
                         <h4>📈 ACUMULADO POR UNIDAD</h4>
                         <div class="tabla-container">
                             <table id="tablaAcumulado">
-                                <thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead>
+                                <thead><td><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead>
                                 <tbody id="tbodyAcumulado"></tbody>
                             </table>
                         </div>
@@ -247,9 +247,10 @@
         // ========== CONFIGURACIÓN ==========
         const CLAVE_OPERADOR = "R2026";
         
+        // ⚠️ ACTUALIZA ESTA URL CON LA NUEVA QUE OBTENGAS DE APPS SCRIPT ⚠️
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTPIXwPKJ4k89bErwMpSas3NjQu32Krj_mGIfMpcNantDpCh_d0K9ywYS8DuYrO-5L/exec";
         
-        const UNIDADES_PREDETERMINADAS = [
+        const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
             "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
             "31 BRIGADA", "32 BRIGADA", "33 BRIGADA", "35 BRIGADA",
@@ -258,7 +259,7 @@
             "61 BRIGADA", "62 BRIGADA", "63 BRIGADA", "64 BRIGADA",
             "81 BRIGADA", "82 BRIGADA", "83 BRIGADA",
             "91 BRIGADA", "92 BRIGADA", "93 BRIGADA", "94 BRIGADA", "99 BRIGADA",
-            "CAVEJB", "COLOG", "6TO CING", "OTRA UNIDAD"
+            "CAVEJB", "COLOG", "6TO CING"
         ];
         
         let registros = [];
@@ -290,13 +291,15 @@
             try {
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
-                registros = datos;
+                registros = Array.isArray(datos) ? datos : [];
                 localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
                 if(loadingDiv) loadingDiv.style.display = 'none';
                 if(dataContent) dataContent.style.display = 'block';
                 actualizarPaneles();
                 if(cedulaActual) actualizarMisRegistros();
+                console.log(`✅ Cargados ${registros.length} registros`);
             } catch(e) {
+                console.error('Error al cargar:', e);
                 const backup = localStorage.getItem('digitalizacion_registros_backup');
                 if(backup) {
                     registros = JSON.parse(backup);
@@ -307,29 +310,35 @@
                     }, 1000);
                     actualizarPaneles();
                 } else {
-                    if(loadingDiv) loadingDiv.innerHTML = '❌ Error de conexión. Recarga.';
+                    if(loadingDiv) loadingDiv.innerHTML = '❌ Error de conexión. Recarga la página.';
+                    registros = [];
                 }
             }
         }
         
         async function guardarEnNube(nuevoRegistro) {
             try {
-                await fetch(SCRIPT_URL, {
+                const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(nuevoRegistro)
                 });
-                await cargarDatosDesdeNube();
-                return true;
+                const resultado = await response.json();
+                if(resultado.success) {
+                    await cargarDatosDesdeNube();
+                    return true;
+                }
+                return false;
             } catch(e) {
+                console.error('Error al guardar:', e);
                 return false;
             }
         }
         
         function obtenerTodasLasUnidades() {
             const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
-            return [...new Set([...UNIDADES_PREDETERMINADAS, ...unidadesDeRegistros])].sort();
+            const todas = [...new Set([...UNIDADES_BASE, ...unidadesDeRegistros])];
+            return todas.sort();
         }
         
         function actualizarUnidades() {
@@ -344,14 +353,14 @@
                     opt.textContent = u;
                     select.appendChild(opt);
                 });
-                if(actual && todas.includes(actual)) select.value = actual;
+                select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
+                if(actual && (todas.includes(actual) || actual === "OTRA_UNIDAD")) select.value = actual;
             }
             
-            // Mostrar/ocultar campo de nueva unidad
             const selectUnidad = document.getElementById('unidadAnalista');
             const campoNueva = document.getElementById('campoNuevaUnidad');
             if(selectUnidad && campoNueva) {
-                if(selectUnidad.value === "OTRA UNIDAD") {
+                if(selectUnidad.value === "OTRA_UNIDAD") {
                     campoNueva.classList.add('visible');
                 } else {
                     campoNueva.classList.remove('visible');
@@ -369,20 +378,22 @@
             if(misRegistros.length > 0) {
                 misRegistrosDiv.style.display = 'block';
                 const tbody = document.getElementById('tbodyMisRegistros');
-                const total = misRegistros.reduce((sum, r) => sum + r.cedulas, 0);
-                document.getElementById('totalAnalista').innerText = total;
-                
+                let acumulado = 0;
                 const registrosOrdenados = [...misRegistros].reverse();
-                tbody.innerHTML = registrosOrdenados.map(r => `
-                    <tr>
-                        <td>${formatearFechaLegible(r.fecha)}</td>
-                        <td>${r.hora || '--:--:--'}</td>
-                        <td>${r.unidad}</td>
-                        <td>${r.libro}</td>
-                        <td><strong>${r.cedulas}</strong></td>
-                        <td>${r.cedulas}</td>
-                    </tr>
-                `).join('');
+                tbody.innerHTML = registrosOrdenados.map(r => {
+                    acumulado += r.cedulas;
+                    return `
+                        <tr>
+                            <td>${formatearFechaLegible(r.fecha)}</td>
+                            <td>${r.hora || '--:--:--'}</td>
+                            <td>${r.unidad}</td>
+                            <td>${r.libro}</td>
+                            <td><strong>${r.cedulas}</strong></td>
+                            <td><strong>${acumulado}</strong></td>
+                        </tr>
+                    `;
+                }).join('');
+                document.getElementById('totalAnalista').innerText = acumulado;
             } else {
                 misRegistrosDiv.style.display = 'block';
                 document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="6" style="text-align:center">Aún no ha registrado nada</td></tr>';
@@ -397,9 +408,12 @@
             if(fechaDiv) fechaDiv.innerHTML = `📅 ${formatearFechaActual()}`;
             
             const hoy = getFechaHoy();
+            console.log("Fecha de hoy (para filtro):", hoy);
+            
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             const acumulado = {};
             const analistasPorUnidad = {};
+            
             registros.forEach(r => {
                 acumulado[r.unidad] = (acumulado[r.unidad] || 0) + r.cedulas;
                 if(!analistasPorUnidad[r.unidad]) analistasPorUnidad[r.unidad] = new Set();
@@ -408,6 +422,8 @@
             
             const totalHoy = registrosHoy.reduce((s,r) => s + r.cedulas, 0);
             const totalAcum = Object.values(acumulado).reduce((s,v) => s + v, 0);
+            
+            console.log("Registros de hoy:", registrosHoy.length, "Total cédulas hoy:", totalHoy);
             
             document.getElementById('totalRegistros') && (document.getElementById('totalRegistros').innerText = registros.length);
             document.getElementById('totalHoy') && (document.getElementById('totalHoy').innerText = totalHoy);
@@ -437,7 +453,7 @@
                 }
             }
             
-            // Tabla hoy
+            // Tabla hoy - mostrando los registros del día actual
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) {
@@ -548,12 +564,10 @@
             win.document.close();
         }
         
-        // Detectar cuando se selecciona "OTRA UNIDAD"
         document.getElementById('unidadAnalista')?.addEventListener('change', function() {
             actualizarUnidades();
         });
         
-        // FORMULARIO ANALISTA
         document.getElementById('formAnalista')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -566,15 +580,13 @@
             const observaciones = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             const hora = formatearHora();
             
-            // Validar año
             if(libro && !/^\d{4}$/.test(libro)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos (Ej: 1983)</div>';
                 return;
             }
             
-            // Determinar unidad final
             let unidadFinal = "";
-            if(unidad === "OTRA UNIDAD") {
+            if(unidad === "OTRA_UNIDAD") {
                 if(!nuevaUnidadTexto) {
                     document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>';
                     return;
@@ -588,7 +600,6 @@
                 }
             }
             
-            // Validaciones básicas
             if(!fecha || !cedulaAnalista || !unidadFinal || !libro || !cedulas) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
                 return;
@@ -605,14 +616,13 @@
             
             if(exito) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado a la nube!</div>';
-                // Actualizar la cédula actual para mostrar sus registros
                 cedulaActual = cedulaAnalista;
+                await cargarDatosDesdeNube();
                 actualizarMisRegistros();
             } else {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
             }
             
-            // Limpiar formulario (excepto cédula que se mantiene para ver sus registros)
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidadTexto').value = '';
             document.getElementById('libroAnalista').value = '';
@@ -625,6 +635,7 @@
         });
         
         actualizarUnidades();
+        cargarDatosDesdeNube();
     </script>
 </body>
 </html>
