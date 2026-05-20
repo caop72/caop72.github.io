@@ -135,7 +135,12 @@
             <div class="mis-registros" id="misRegistros" style="display: none;">
                 <h4>📋 MIS REGISTROS</h4>
                 <div class="tabla-container" style="max-height: 200px;">
-                    <table><thead><tr><th>Fecha</th><th>Hora</th><th>Unidad</th><th>Año</th><th>HOY</th><th>ACUMULADO</th></tr></thead><tbody id="tbodyMisRegistros"></tbody></table>
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr><th>Fecha</th><th>Hora</th><th>Unidad</th><th>Año</th><th>HOY</th><th>ACUMULADO</th></tr>
+                        </thead>
+                        <tbody id="tbodyMisRegistros"></tbody>
+                    </table>
                 </div>
                 <div style="margin-top: 10px; text-align: right;"><strong>Total acumulado por usted:</strong> <span id="totalAnalista" class="total-analista">0</span> cédulas</div>
             </div>
@@ -159,27 +164,22 @@
             </div>
             <div id="contenidoOperador" style="display: none;">
                 <div class="fecha-actual-operador" id="fechaActualOperador">📅 Cargando...</div>
-                <div id="loadingData" class="loading">⏳ Cargando datos desde la nube...</div>
-                <div id="dataContent" style="display: none;">
-                    <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">REGISTROS TOTALES</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
-                    </div>
-                    <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container" style="max-height: 400px;"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Observaciones</th><th>Acción</th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
-                    <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Acción</th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
-                    <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
-                    <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">📄 GENERAR INFORME</button>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">REGISTROS TOTALES</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
                 </div>
+                <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container" style="max-height: 400px;"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Observaciones</th><th>Acción</th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
+                <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Acción</th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
+                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
+                <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">📄 GENERAR INFORME</button>
             </div>
         </div>
     </div>
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBigCFsvcr5xR1xOgWRkg58xY-OUnqNokkdSWBESbfQwG5kEkmqNvl91qeMYVe6SUx/exec";
-        
         const UNIDADES_BASE = ["11 BRIGADA","12 BRIGADA","13 BRIGADA","14 BRIGADA","21 BRIGADA","22 BRIGADA","25 BRIGADA","31 BRIGADA","32 BRIGADA","33 BRIGADA","35 BRIGADA","41 BRIGADA","42 BRIGADA","43 BRIGADA","51 BRIGADA","52 BRIGADA","53 BRIGADA","61 BRIGADA","62 BRIGADA","63 BRIGADA","64 BRIGADA","81 BRIGADA","82 BRIGADA","83 BRIGADA","91 BRIGADA","92 BRIGADA","93 BRIGADA","94 BRIGADA","99 BRIGADA","CAVEJB","COLOG","6TO CING"];
         
         let registros = [];
@@ -190,54 +190,23 @@
         function formatearFechaLegible(fechaStr) { const fecha = new Date(fechaStr); const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB']; const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC']; return `${dias[fecha.getDay()]} ${fecha.getDate()} ${meses[fecha.getMonth()]} ${fecha.getFullYear()}`; }
         function formatearFechaActual() { const hoy = new Date(); const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE']; return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`; }
         
-        async function cargarDatosDesdeNube() {
-            const loadingDiv = document.getElementById('loadingData');
-            const dataContent = document.getElementById('dataContent');
-            try {
-                console.log("🔄 Cargando desde:", SCRIPT_URL);
-                const respuesta = await fetch(SCRIPT_URL);
-                const datos = await respuesta.json();
-                registros = Array.isArray(datos) ? datos : [];
-                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
-                if(loadingDiv) loadingDiv.style.display = 'none';
-                if(dataContent) dataContent.style.display = 'block';
-                actualizarPaneles();
-                if(cedulaActual) actualizarMisRegistros();
-                console.log(`✅ Cargados ${registros.length} registros`);
-            } catch(e) {
-                console.error('❌ Error al cargar:', e);
-                const backup = localStorage.getItem('digitalizacion_registros_backup');
-                if(backup) {
-                    registros = JSON.parse(backup);
-                    if(loadingDiv) loadingDiv.innerHTML = '⚠️ Usando datos locales';
-                    setTimeout(() => { if(loadingDiv) loadingDiv.style.display = 'none'; if(dataContent) dataContent.style.display = 'block'; }, 1000);
-                    actualizarPaneles();
-                } else {
-                    if(loadingDiv) loadingDiv.innerHTML = '❌ Error de conexión';
-                }
+        function cargarDatos() {
+            const datosGuardados = localStorage.getItem('digitalizacion_registros');
+            if (datosGuardados) {
+                try {
+                    registros = JSON.parse(datosGuardados);
+                } catch(e) { registros = []; }
+            } else {
+                registros = [];
             }
+            actualizarPaneles();
+            if(cedulaActual) actualizarMisRegistros();
+            console.log(`✅ Cargados ${registros.length} registros`);
         }
         
-        // FUNCIÓN GUARDAR CORREGIDA CON NO-CORS
-        async function guardarEnNube(nuevoRegistro) {
-            try {
-                console.log("🔄 Enviando a:", SCRIPT_URL, nuevoRegistro);
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(nuevoRegistro)
-                });
-                console.log("📥 Enviado (no-cors)");
-                // Esperamos 2 segundos y recargamos los datos
-                setTimeout(async () => {
-                    await cargarDatosDesdeNube();
-                }, 2000);
-                return true;
-            } catch(e) {
-                console.error('❌ Error al guardar:', e);
-                return false;
-            }
+        function guardarDatos() {
+            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+            console.log(`💾 Guardados ${registros.length} registros`);
         }
         
         function obtenerTodasLasUnidades() {
@@ -311,8 +280,8 @@
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if(tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
-                if(unidades.length === 0) tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td></tr>';
-                else tbodyAcum.innerHTML = unidades.map(u => `<tr><td>${u}</td><td><strong>${acumulado[u]}</strong></td><td>${analistasPorUnidad[u].size} analista(s)</td></tr>`).join('');
+                if(unidades.length === 0) tbodyAcum.innerHTML = '</table><td colspan="3">Sin datos</td></tr>';
+                else tbodyAcum.innerHTML = unidades.map(u => `</td><td>${u}</td><td><strong>${acumulado[u]}</strong></td><td>${analistasPorUnidad[u].size} analista(s)</td></tr>`).join('');
             }
             if(cedulaActual) actualizarMisRegistros();
         }
@@ -321,9 +290,9 @@
             const registro = registros[index];
             if(registro && confirm(`¿Eliminar registro de ${registro.unidad}?`)) {
                 registros.splice(index, 1);
-                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
+                guardarDatos();
                 actualizarPaneles();
-                alert('⚠️ Registro eliminado SOLO localmente.');
+                alert('✅ Registro eliminado');
             }
         }
         
@@ -356,7 +325,7 @@
             if(document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
                 document.getElementById('passwordOperador').style.display = 'none';
                 document.getElementById('contenidoOperador').style.display = 'block';
-                cargarDatosDesdeNube();
+                cargarDatos();
             } else alert('❌ Clave incorrecta');
         }
         
@@ -411,19 +380,13 @@
             if(!fecha || !cedulaAnalista || !unidadFinal || !libro || !cedulas) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>'; return; }
             if(!/^\d+$/.test(cedulaAnalista)) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>'; return; }
             
-            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
-            const exito = await guardarEnNube({fecha, cedulaAnalista, unidad: unidadFinal, libro, cedulas, observaciones, hora});
+            registros.push({fecha, cedulaAnalista, unidad: unidadFinal, libro, cedulas, observaciones, hora});
+            guardarDatos();
             
-            if(exito) {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado a la nube!</div>';
-                cedulaActual = cedulaAnalista;
-                setTimeout(async () => {
-                    await cargarDatosDesdeNube();
-                    actualizarMisRegistros();
-                }, 2000);
-            } else {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Revise la consola (F12)</div>';
-            }
+            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado!</div>';
+            cedulaActual = cedulaAnalista;
+            actualizarPaneles();
+            actualizarMisRegistros();
             
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidadTexto').value = '';
@@ -432,11 +395,11 @@
             document.getElementById('observacionesAnalista').value = '';
             document.getElementById('campoNuevaUnidad').classList.remove('visible');
             actualizarUnidades();
-            setTimeout(() => { const msg = document.getElementById('mensajeAnalista'); if(msg) msg.innerHTML = ''; }, 4000);
+            setTimeout(() => { const msg = document.getElementById('mensajeAnalista'); if(msg) msg.innerHTML = ''; }, 3000);
         });
         
+        cargarDatos();
         actualizarUnidades();
-        cargarDatosDesdeNube();
     </script>
 </body>
 </html>
