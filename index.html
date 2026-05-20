@@ -231,7 +231,7 @@
                         <h4>📈 ACUMULADO POR UNIDAD</h4>
                         <div class="tabla-container">
                             <table id="tablaAcumulado">
-                                <thead><td><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead>
+                                <thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead>
                                 <tbody id="tbodyAcumulado"></tbody>
                             </table>
                         </div>
@@ -247,8 +247,8 @@
         // ========== CONFIGURACIÓN ==========
         const CLAVE_OPERADOR = "R2026";
         
-        // ⚠️ ACTUALIZA ESTA URL CON LA NUEVA QUE OBTENGAS DE APPS SCRIPT ⚠️
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTPIXwPKJ4k89bErwMpSas3NjQu32Krj_mGIfMpcNantDpCh_d0K9ywYS8DuYrO-5L/exec";
+        // ✅ TU NUEVA URL DE APPS SCRIPT (ya incluida)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxP8IcOX9eSActf2k3yTK2Q5ks8H46vFVPacRzF2aBL0FO6NkqcrYkiTuIZg6qL47TK/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -408,8 +408,6 @@
             if(fechaDiv) fechaDiv.innerHTML = `📅 ${formatearFechaActual()}`;
             
             const hoy = getFechaHoy();
-            console.log("Fecha de hoy (para filtro):", hoy);
-            
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             const acumulado = {};
             const analistasPorUnidad = {};
@@ -422,8 +420,6 @@
             
             const totalHoy = registrosHoy.reduce((s,r) => s + r.cedulas, 0);
             const totalAcum = Object.values(acumulado).reduce((s,v) => s + v, 0);
-            
-            console.log("Registros de hoy:", registrosHoy.length, "Total cédulas hoy:", totalHoy);
             
             document.getElementById('totalRegistros') && (document.getElementById('totalRegistros').innerText = registros.length);
             document.getElementById('totalHoy') && (document.getElementById('totalHoy').innerText = totalHoy);
@@ -453,7 +449,7 @@
                 }
             }
             
-            // Tabla hoy - mostrando los registros del día actual
+            // Tabla hoy
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) {
