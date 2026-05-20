@@ -281,6 +281,22 @@
             text-align: center;
             font-size: 14px;
         }
+        
+        .mensaje-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 12px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
 
         @media (max-width: 480px) {
             .stats-grid {
@@ -382,43 +398,48 @@
             </div>
 
             <div id="contenidoOperador" style="display: none;">
-                <!-- FECHA ACTUAL VISIBLE -->
                 <div class="fecha-actual-operador" id="fechaActualOperador">
                     📅 Cargando fecha...
                 </div>
-
-                <div class="stats-grid" id="statsOperador">
-                    <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">REGISTROS TOTALES</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
-                    <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
+                
+                <div id="loadingData" class="loading">
+                    ⏳ Cargando datos desde la nube...
                 </div>
 
-                <div class="seccion-tabla">
-                    <h4>📋 REGISTROS DE HOY</h4>
-                    <div class="tabla-container">
-                        <table id="tablaHoy">
-                            <thead>
-                                <tr><th>Analista (Cédula)</th><th>Unidad</th><th>Libro</th><th>Cédulas</th><th>Acción</th></tr>
-                            </thead>
-                            <tbody id="tbodyHoy"></tbody>
-                        </table>
+                <div id="dataContent" style="display: none;">
+                    <div class="stats-grid" id="statsOperador">
+                        <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">REGISTROS TOTALES</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
+                        <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
                     </div>
-                </div>
 
-                <div class="seccion-tabla">
-                    <h4>📈 ACUMULADO POR UNIDAD</h4>
-                    <div class="tabla-container">
-                        <table id="tablaAcumulado">
-                            <thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas que reportaron</th></tr></thead>
-                            <tbody id="tbodyAcumulado"></tbody>
-                        </table>
+                    <div class="seccion-tabla">
+                        <h4>📋 REGISTROS DE HOY</h4>
+                        <div class="tabla-container">
+                            <table id="tablaHoy">
+                                <thead>
+                                    <tr><th>Analista (Cédula)</th><th>Unidad</th><th>Libro</th><th>Cédulas</th><th>Acción</th></tr>
+                                </thead>
+                                <tbody id="tbodyHoy"></tbody>
+                            </table>
+                        </div>
                     </div>
-                </div>
 
-                <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">
-                    📄 GENERAR INFORME PARA EL JEFE
-                </button>
+                    <div class="seccion-tabla">
+                        <h4>📈 ACUMULADO POR UNIDAD</h4>
+                        <div class="tabla-container">
+                            <table id="tablaAcumulado">
+                                <thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas que reportaron</th></tr></thead>
+                                <tbody id="tbodyAcumulado"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">
+                        📄 GENERAR INFORME PARA EL JEFE
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -427,7 +448,10 @@
         // ========== CONFIGURACIÓN ==========
         const CLAVE_OPERADOR = "registro2026**";
         
-        // LISTA EXACTA DE 33 UNIDADES (CORREGIDA - SOLO LAS QUE INDICASTE)
+        // URL DE GOOGLE SHEETS (TU WEB APP)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTPIXwPKJ4k89bErwMpSas3NjQu32Krj_mGIfMpcNantDpCh_d0K9ywYS8DuYrO-5L/exec";
+        
+        // LISTA EXACTA DE 33 UNIDADES
         const UNIDADES_PREDETERMINADAS = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
             "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
@@ -440,21 +464,7 @@
             "CAVEJB", "COLOG", "6TO CING"
         ];
         
-        // REGISTROS VÍRGENES (sin datos de ejemplo)
-        let registros = JSON.parse(localStorage.getItem('digitalizacion_registros')) || [];
-        
-        // Si no hay registros, empezar con array vacío
-        if(registros.length === 0) {
-            registros = [];
-            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
-        }
-        
-        // Función para obtener todas las unidades (las predeterminadas + las nuevas que agreguen analistas)
-        function obtenerTodasLasUnidades() {
-            const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
-            const todas = [...new Set([...UNIDADES_PREDETERMINADAS, ...unidadesDeRegistros])];
-            return todas.sort();
-        }
+        let registros = [];
         
         // Funciones de fecha
         function getFechaHoy() { 
@@ -465,6 +475,72 @@
             const hoy = new Date();
             const meses = ['ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO', 'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'];
             return `${hoy.getDate()} de ${meses[hoy.getMonth()]} de ${hoy.getFullYear()}`;
+        }
+        
+        // ========== FUNCIONES DE NUBE (GOOGLE SHEETS) ==========
+        
+        // Cargar datos desde Google Sheets
+        async function cargarDatosDesdeNube() {
+            const loadingDiv = document.getElementById('loadingData');
+            const dataContent = document.getElementById('dataContent');
+            
+            try {
+                const respuesta = await fetch(SCRIPT_URL);
+                const datos = await respuesta.json();
+                registros = datos;
+                
+                // Guardar copia local de respaldo
+                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
+                
+                if(loadingDiv) loadingDiv.style.display = 'none';
+                if(dataContent) dataContent.style.display = 'block';
+                
+                actualizarPaneles();
+                console.log(`✅ Cargados ${registros.length} registros desde la nube`);
+            } catch(e) {
+                console.error('Error al cargar de nube:', e);
+                
+                // Intentar cargar respaldo local
+                const backup = localStorage.getItem('digitalizacion_registros_backup');
+                if(backup) {
+                    registros = JSON.parse(backup);
+                    if(loadingDiv) loadingDiv.innerHTML = '⚠️ Usando datos locales (sin conexión a la nube)';
+                    setTimeout(() => {
+                        if(loadingDiv) loadingDiv.style.display = 'none';
+                        if(dataContent) dataContent.style.display = 'block';
+                    }, 1500);
+                    actualizarPaneles();
+                } else {
+                    if(loadingDiv) loadingDiv.innerHTML = '❌ Error de conexión. Recarga la página.';
+                    registros = [];
+                }
+            }
+        }
+        
+        // Guardar registro en Google Sheets
+        async function guardarEnNube(nuevoRegistro) {
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoRegistro)
+                });
+                
+                // Recargar datos después de guardar
+                await cargarDatosDesdeNube();
+                return true;
+            } catch(e) {
+                console.error('Error al guardar en nube:', e);
+                return false;
+            }
+        }
+        
+        // Función para obtener todas las unidades
+        function obtenerTodasLasUnidades() {
+            const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
+            const todas = [...new Set([...UNIDADES_PREDETERMINADAS, ...unidadesDeRegistros])];
+            return todas.sort();
         }
         
         // Actualizar lista de unidades en el select
@@ -487,7 +563,6 @@
         function actualizarPaneles() {
             actualizarUnidades();
             
-            // Mostrar fecha actual en el panel del operador
             const fechaActualDiv = document.getElementById('fechaActualOperador');
             if(fechaActualDiv) {
                 fechaActualDiv.innerHTML = `📅 ${formatearFechaActual()}`;
@@ -496,7 +571,6 @@
             const hoy = getFechaHoy();
             const registrosHoy = registros.filter(r => r.fecha === hoy);
             
-            // Acumulado por unidad (SUMA de todos los registros de cada unidad)
             const acumulado = {};
             const analistasPorUnidad = {};
             
@@ -516,7 +590,7 @@
             document.getElementById('totalAcumulado') && (document.getElementById('totalAcumulado').innerText = totalAcum);
             document.getElementById('diasTrabajados') && (document.getElementById('diasTrabajados').innerText = diasTrabajados);
             
-            // Tabla de hoy (con cédula del analista - cada registro individual)
+            // Tabla de hoy
             const tbodyHoy = document.getElementById('tbodyHoy');
             if(tbodyHoy) {
                 if(registrosHoy.length === 0) {
@@ -534,12 +608,12 @@
                 }
             }
             
-            // Tabla acumulado por unidad (SUMA de todos los aportes)
+            // Tabla acumulado
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if(tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
                 if(unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td><tr>';
+                    tbodyAcum.innerHTML = '<tr><td colspan="3">Sin datos</td></tr>';
                 } else {
                     tbodyAcum.innerHTML = unidades.map(u => `
                         <tr>
@@ -552,13 +626,14 @@
             }
         }
         
-        // Eliminar registro por índice
+        // Eliminar registro (solo local, la nube requiere implementación adicional)
         window.eliminarRegistro = function(index) {
             const registro = registros[index];
             if(registro && confirm(`¿Eliminar registro de ${registro.unidad} (Analista: ${registro.cedulaAnalista}) del día ${registro.fecha}?`)) {
                 registros.splice(index, 1);
-                localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
                 actualizarPaneles();
+                alert('⚠️ Registro eliminado solo localmente. Para eliminarlo de la nube, contacte al administrador.');
             }
         }
         
@@ -592,15 +667,14 @@
             if(document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
                 document.getElementById('passwordOperador').style.display = 'none';
                 document.getElementById('contenidoOperador').style.display = 'block';
-                actualizarPaneles();
+                cargarDatosDesdeNube();
             } else {
                 alert('❌ Clave incorrecta');
             }
         }
         
-        // INFORME EJECUTIVO - Con fecha CORRECTA del sistema
+        // INFORME EJECUTIVO
         function generarInformeEjecutivo() {
-            // FECHA ACTUAL DEL SISTEMA
             const ahora = new Date();
             const mesesCortos = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
             const fechaCorta = `${String(ahora.getDate()).padStart(2,'0')} ${mesesCortos[ahora.getMonth()]} ${ahora.getFullYear()}`;
@@ -622,7 +696,6 @@
             const diasTrabajados = new Set(registros.map(r => r.fecha)).size;
             const totalReportes = registros.length;
             
-            // Detalle por unidad (SUMA de todos los aportes)
             const detalleUnidades = {};
             registros.forEach(r => { detalleUnidades[r.unidad] = (detalleUnidades[r.unidad] || 0) + r.cedulas; });
             const unidadesOrdenadas = Object.keys(detalleUnidades).sort();
@@ -682,7 +755,7 @@
                 <div class="informe">
                     <div class="header">
                         <h1>📊 INFORME PERIÓDICO DEL AVANCE</h1>
-                        <h2>Jornada de Digitalización de Data de la Reserva Militar</h2>
+                        <h2>Jornada de Digitalización de la Reserva Militar</h2>
                         <div class="fecha-informe">📅 ${fechaCorta}</div>
                     </div>
                     
@@ -692,25 +765,21 @@
                     </div>
                     
                     <div class="indicadores">
-                        <div class="indicador"><div class="indicador-valor">${totalUnidades}</div><div class="indicador-label">UNIDADES QUE HAN REPORTADO</div></div>
-                        <div class="indicador"><div class="indicador-valor">${totalAnalistas}</div><div class="indicador-label">ANALISTAS QUE HAN REPORTADO</div></div>
-                        <div class="indicador"><div class="indicador-valor">${diasTrabajados}</div><div class="indicador-label">DÍAS DE TRABAJO</div></div>
-                        <div class="indicador"><div class="indicador-valor">${totalReportes}</div><div class="indicador-label">REPORTES INGRESADOS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${totalUnidades}</div><div class="indicador-label">UNIDADES</div></div>
+                        <div class="indicador"><div class="indicador-valor">${totalAnalistas}</div><div class="indicador-label">ANALISTAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${diasTrabajados}</div><div class="indicador-label">DÍAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${totalReportes}</div><div class="indicador-label">REPORTES</div></div>
                     </div>
                     
                     <div class="tabla-informe">
-                        <h4>📋 Detalle por Unidad (Acumulado histórico)</h4>
-                        <div style="overflow-x: auto;">
-                             <table>
-                                <thead>
-                                    <tr><th>Unidad</th><th>Total Cédulas</th></tr>
-                                </thead>
-                                <tbody>
-                                    ${unidadesOrdenadas.map(u => `<tr><td>${u}</td><td><strong>${detalleUnidades[u].toLocaleString()}</strong></td></tr>`).join('')}
-                                    ${unidadesOrdenadas.length === 0 ? '<tr><td colspan="2" style="text-align:center">Sin datos registrados</td></tr>' : ''}
-                                </tbody>
-                             </table>
-                        </div>
+                        <h4>📋 Detalle por Unidad</h4>
+                        <table>
+                            <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                            <tbody>
+                                ${unidadesOrdenadas.map(u => `<tr><td>${u}</td><td><strong>${detalleUnidades[u].toLocaleString()}</strong></td></tr>`).join('')}
+                                ${unidadesOrdenadas.length === 0 ? '<tr><td colspan="2">Sin datos registrados</td></tr>' : ''}
+                            </tbody>
+                        </table>
                     </div>
                     
                     <div class="footer">
@@ -727,8 +796,8 @@
             ventana.document.close();
         }
         
-        // Formulario Analista
-        document.getElementById('formAnalista')?.addEventListener('submit', function(e) {
+        // Formulario Analista (versión nube)
+        document.getElementById('formAnalista')?.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const fecha = document.getElementById('fechaAnalista').value;
@@ -742,23 +811,27 @@
             if(nuevaUnidad) unidad = nuevaUnidad;
             
             if(!fecha || !cedulaAnalista || !unidad || !libro || !cedulas) {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito" style="background:#f8d7da;color:#721c24;">❌ Complete todos los campos (fecha, cédula, unidad, libro, cantidad)</div>';
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
                 return;
             }
             
-            // Validar cédula (solo números)
             if(!/^\d+$/.test(cedulaAnalista)) {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito" style="background:#f8d7da;color:#721c24;">❌ La cédula debe contener solo números</div>';
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
                 return;
             }
             
-            // Guardar registro
-            registros.push({fecha, cedulaAnalista, unidad, libro, cedulas, observaciones});
-            localStorage.setItem('digitalizacion_registros', JSON.stringify(registros));
+            const nuevoRegistro = {fecha, cedulaAnalista, unidad, libro, cedulas, observaciones};
             
-            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado exitosamente! El Operador Principal podrá verlo.</div>';
+            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando a la nube...</div>';
             
-            // Limpiar formulario
+            const exito = await guardarEnNube(nuevoRegistro);
+            
+            if(exito) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado exitosamente a la nube!</div>';
+            } else {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error de conexión. Intente nuevamente.</div>';
+            }
+            
             document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
             document.getElementById('nuevaUnidad').value = '';
@@ -769,7 +842,8 @@
             actualizarUnidades();
             
             setTimeout(() => {
-                document.getElementById('mensajeAnalista').innerHTML = '';
+                const msgDiv = document.getElementById('mensajeAnalista');
+                if(msgDiv) msgDiv.innerHTML = '';
             }, 3000);
         });
         
