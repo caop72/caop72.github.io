@@ -178,7 +178,6 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        // ⚠️ ACTUALIZA ESTA URL CON LA QUE OBTENGAS DE APPS SCRIPT ⚠️
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBigCFsvcr5xR1xOgWRkg58xY-OUnqNokkdSWBESbfQwG5kEkmqNvl91qeMYVe6SUx/exec";
         
         const UNIDADES_BASE = ["11 BRIGADA","12 BRIGADA","13 BRIGADA","14 BRIGADA","21 BRIGADA","22 BRIGADA","25 BRIGADA","31 BRIGADA","32 BRIGADA","33 BRIGADA","35 BRIGADA","41 BRIGADA","42 BRIGADA","43 BRIGADA","51 BRIGADA","52 BRIGADA","53 BRIGADA","61 BRIGADA","62 BRIGADA","63 BRIGADA","64 BRIGADA","81 BRIGADA","82 BRIGADA","83 BRIGADA","91 BRIGADA","92 BRIGADA","93 BRIGADA","94 BRIGADA","99 BRIGADA","CAVEJB","COLOG","6TO CING"];
@@ -219,23 +218,24 @@
             }
         }
         
+        // FUNCIÓN GUARDAR CORREGIDA CON NO-CORS
         async function guardarEnNube(nuevoRegistro) {
             try {
                 console.log("🔄 Enviando a:", SCRIPT_URL, nuevoRegistro);
-                const response = await fetch(SCRIPT_URL, {
+                await fetch(SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(nuevoRegistro)
                 });
-                const resultado = await response.json();
-                console.log("📥 Respuesta:", resultado);
-                if(resultado.success) {
+                console.log("📥 Enviado (no-cors)");
+                // Esperamos 2 segundos y recargamos los datos
+                setTimeout(async () => {
                     await cargarDatosDesdeNube();
-                    return true;
-                }
-                return false;
+                }, 2000);
+                return true;
             } catch(e) {
-                console.error('❌ Error detallado al guardar:', e);
+                console.error('❌ Error al guardar:', e);
                 return false;
             }
         }
@@ -417,8 +417,10 @@
             if(exito) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro enviado a la nube!</div>';
                 cedulaActual = cedulaAnalista;
-                await cargarDatosDesdeNube();
-                actualizarMisRegistros();
+                setTimeout(async () => {
+                    await cargarDatosDesdeNube();
+                    actualizarMisRegistros();
+                }, 2000);
             } else {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Revise la consola (F12)</div>';
             }
