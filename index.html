@@ -118,6 +118,32 @@
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; }
         
+        .filtro-fecha {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .filtro-fecha label { font-weight: 600; color: #1e3c72; }
+        .filtro-fecha input {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .filtro-fecha button {
+            background: #1e3c72;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+        
         .grafica-container {
             background: #f8f9fa;
             border-radius: 16px;
@@ -267,9 +293,38 @@
             <div id="contenidoOperador" style="display: none;">
                 <div class="stats-grid">
                     <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">TOTAL REGISTROS</div></div>
-                    <div class="stat-card"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">CÉDULAS HOY</div></div>
                     <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalAnalistas">0</div><div class="stat-label">ANALISTAS</div></div>
                     <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
+                </div>
+
+                <!-- SELECTOR DE FECHA PARA VER REGISTROS POR DÍA -->
+                <div class="filtro-fecha">
+                    <label>📅 Ver registros de la fecha:</label>
+                    <input type="date" id="fechaFiltro">
+                    <button id="btnFiltrarFecha">🔍 Ver registros</button>
+                    <button id="btnMostrarHoy" style="background:#ff9800;">📆 Mostrar hoy</button>
+                </div>
+
+                <!-- REGISTROS POR FECHA SELECCIONADA -->
+                <div class="seccion-tabla">
+                    <h4>📋 REGISTROS DEL DÍA <span id="fechaSeleccionadaLabel"></span></h4>
+                    <div class="tabla-container">
+                        <table id="tablaRegistrosFecha">
+                            <thead>
+                                <tr>
+                                    <th>HORA</th>
+                                    <th>ANALISTA (CÉDULA)</th>
+                                    <th>UNIDAD</th>
+                                    <th>AÑO LIBRO</th>
+                                    <th>CÉDULAS</th>
+                                    <th>OBSERVACIONES</th>
+                                    <th>ACCIÓN</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyRegistrosFecha"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <div class="grafica-container">
@@ -277,7 +332,7 @@
                     <canvas id="graficaAvance" width="400" height="200"></canvas>
                 </div>
 
-                <!-- TABLA CON TODOS LOS DATOS DEL ANALISTA -->
+                <!-- TABLA CON TODOS LOS REGISTROS -->
                 <div class="seccion-tabla">
                     <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
                     <div class="tabla-container">
@@ -296,27 +351,6 @@
                                 </tr>
                             </thead>
                             <tbody id="tbodyTodosRegistros"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- REGISTROS DE HOY -->
-                <div class="seccion-tabla">
-                    <h4>📋 REGISTROS DE HOY</h4>
-                    <div class="tabla-container">
-                        <table id="tablaHoy">
-                            <thead>
-                                <tr>
-                                    <th>HORA</th>
-                                    <th>ANALISTA</th>
-                                    <th>UNIDAD</th>
-                                    <th>AÑO</th>
-                                    <th>CÉDULAS</th>
-                                    <th>OBSERVACIONES</th>
-                                    <th>ACCIÓN</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbodyHoy"></tbody>
                         </table>
                     </div>
                 </div>
@@ -363,6 +397,7 @@
         
         let registros = [];
         let miGrafica = null;
+        let fechaSeleccionada = "";
         
         function getFechaHoy() { 
             return new Date().toISOString().split('T')[0]; 
@@ -451,6 +486,7 @@
             actualizarPaneles();
             actualizarGrafica();
             console.log(`✅ Cargados ${registros.length} registros`);
+            console.log("Fechas de registros:", [...new Set(registros.map(r => r.fecha))]);
         }
         
         function guardarDatos() {
@@ -490,26 +526,52 @@
             }
         }
         
+        function actualizarRegistrosPorFecha() {
+            if (!fechaSeleccionada) return;
+            const registrosFecha = registros.filter(r => r.fecha === fechaSeleccionada);
+            const label = document.getElementById('fechaSeleccionadaLabel');
+            if (label) label.innerText = formatearFecha(fechaSeleccionada);
+            
+            const tbody = document.getElementById('tbodyRegistrosFecha');
+            if (tbody) {
+                if (registrosFecha.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ No hay registros en esta fecha</td></tr>';
+                } else {
+                    tbody.innerHTML = registrosFecha.map(r => `
+                        <tr>
+                            <td>${r.hora || '--:--:--'}</td>
+                            <td><span class="badge-analista">${r.cedulaAnalista}</span></td>
+                            <td>${r.unidad}</td>
+                            <td>${r.libro}</td>
+                            <td><strong style="color:#28a745;">${r.cedulas}</strong></td>
+                            <td>${r.observaciones || 'Ninguna'}</td>
+                            <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
+        
         function actualizarPaneles() {
             actualizarSelectUnidad();
-            const hoy = getFechaHoy();
-            const registrosHoy = registros.filter(r => r.fecha === hoy);
+            
             const acumulado = {};
             const analistasPorUnidad = {};
+            const analistasSet = new Set();
             registros.forEach(r => {
                 acumulado[r.unidad] = (acumulado[r.unidad] || 0) + r.cedulas;
                 if (!analistasPorUnidad[r.unidad]) analistasPorUnidad[r.unidad] = new Set();
                 analistasPorUnidad[r.unidad].add(r.cedulaAnalista);
+                analistasSet.add(r.cedulaAnalista);
             });
-            const totalHoy = registrosHoy.reduce((s, r) => s + r.cedulas, 0);
             const totalAcum = Object.values(acumulado).reduce((s, v) => s + v, 0);
             
             document.getElementById('totalRegistros').innerText = registros.length;
-            document.getElementById('totalHoy').innerText = totalHoy;
             document.getElementById('totalAcumulado').innerText = totalAcum;
+            document.getElementById('totalAnalistas').innerText = analistasSet.size;
             document.getElementById('diasTrabajados').innerText = new Set(registros.map(r => r.fecha)).size;
             
-            // TABLA TODOS LOS REGISTROS (con TODOS los datos)
+            // TABLA TODOS LOS REGISTROS
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
@@ -532,26 +594,6 @@
                 }
             }
             
-            // TABLA REGISTROS DE HOY (con TODOS los datos)
-            const tbodyHoy = document.getElementById('tbodyHoy');
-            if (tbodyHoy) {
-                if (registrosHoy.length === 0) {
-                    tbodyHoy.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ No hay registros hoy</td></tr>';
-                } else {
-                    tbodyHoy.innerHTML = registrosHoy.map(r => `
-                        <tr>
-                            <td>${r.hora || '--:--:--'}</td>
-                            <td>${r.cedulaAnalista}</td>
-                            <td>${r.unidad}</td>
-                            <td>${r.libro}</td>
-                            <td><strong style="color:#28a745;">${r.cedulas}</strong></td>
-                            <td>${r.observaciones || 'Ninguna'}</td>
-                            <td><button class="btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button></td>
-                        </tr>
-                    `).join('');
-                }
-            }
-            
             // TABLA ACUMULADO POR UNIDAD
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if (tbodyAcum) {
@@ -568,6 +610,9 @@
                     `).join('');
                 }
             }
+            
+            // Actualizar registros por fecha si hay fecha seleccionada
+            if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
         
         window.eliminarRegistro = function(index) {
@@ -598,6 +643,9 @@
             document.getElementById('passwordOperador').style.display = 'block';
             document.getElementById('contenidoOperador').style.display = 'none';
             document.getElementById('claveOperador').value = '';
+            // Inicializar fecha seleccionada como hoy
+            fechaSeleccionada = getFechaHoy();
+            document.getElementById('fechaFiltro').value = fechaSeleccionada;
         }
         
         function volverInicio() {
@@ -615,6 +663,17 @@
             } else {
                 alert('❌ Clave incorrecta');
             }
+        }
+        
+        function filtrarPorFecha() {
+            fechaSeleccionada = document.getElementById('fechaFiltro').value;
+            actualizarRegistrosPorFecha();
+        }
+        
+        function mostrarHoy() {
+            fechaSeleccionada = getFechaHoy();
+            document.getElementById('fechaFiltro').value = fechaSeleccionada;
+            actualizarRegistrosPorFecha();
         }
         
         function generarInforme() {
@@ -675,7 +734,7 @@
                     <h4>📋 Detalle por Unidad</h4>
                     <table style="width:100%">
                         <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
-                        <tbody>${Object.keys(detalle).sort().map(u => `<td>${u}</td>}<td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
+                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></table>`).join('')}</tbody>
                     </table>
                     <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px">
                         <p>Informe generado automáticamente<br>${new Date().toLocaleString()}</p>
@@ -694,6 +753,8 @@
         document.getElementById('volverOperador').addEventListener('click', volverInicio);
         document.getElementById('btnIngresarOperador').addEventListener('click', ingresarOperador);
         document.getElementById('btnGenerarInforme').addEventListener('click', generarInforme);
+        document.getElementById('btnFiltrarFecha').addEventListener('click', filtrarPorFecha);
+        document.getElementById('btnMostrarHoy').addEventListener('click', mostrarHoy);
         
         document.getElementById('unidadAnalista').addEventListener('change', function() {
             const campoNueva = document.getElementById('campoNuevaUnidad');
@@ -752,7 +813,6 @@
                 return;
             }
             
-            // Verificar si ya existe registro duplicado (misma fecha, misma cédula, misma unidad)
             const existe = registros.some(r => r.fecha === fecha && r.cedulaAnalista === cedula && r.unidad === unidadFinal);
             if (existe) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Ya existe un registro suyo para esta unidad en esta fecha</div>';
