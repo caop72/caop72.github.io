@@ -151,7 +151,7 @@
                 </div>
                 <div class="seccion-tabla"><h4>📋 TODOS LOS REGISTROS</h4><div class="tabla-container" style="max-height: 400px;"><table id="tablaTodosRegistros"><thead><tr><th>#</th><th>Fecha</th><th>Hora</th><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Observaciones</th><th>Acción</th></tr></thead><tbody id="tbodyTodosRegistros"></tbody></table></div></div>
                 <div class="seccion-tabla"><h4>📋 REGISTROS DE HOY</h4><div class="tabla-container"><table id="tablaHoy"><thead><tr><th>Analista</th><th>Unidad</th><th>Año</th><th>Cédulas</th><th>Acción</th></tr></thead><tbody id="tbodyHoy"></tbody></table></div></div>
-                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></table></div></div>
+                <div class="seccion-tabla"><h4>📈 ACUMULADO POR UNIDAD</h4><div class="tabla-container"><table id="tablaAcumulado"><thead><tr><th>Unidad</th><th>Total Cédulas</th><th>Analistas</th></tr></thead><tbody id="tbodyAcumulado"></tbody></tr></div></div>
                 <button class="btn-generar-informe" onclick="generarInformeEjecutivo()">📄 GENERAR INFORME</button>
             </div>
         </div>
@@ -160,7 +160,15 @@
     <script>
         const CLAVE_OPERADOR = "R2026";
         
-        // ========== TABLA DE CORRECCIONES (basada en tus nombres reales) ==========
+        // ========== NOMBRES INCORRECTOS QUE NO DEBEN APARECER EN LA LISTA ==========
+        const NOMBRES_EXCLUIDOS = [
+            "11 BRIG", "32 BRIG", "23 BRIG", "51 BRIG", "82 BRIG", 
+            "92 BRIG", "62 BRIG", "35 BRIG", "31 BRIG", "94 BRIG",
+            "11BRIG", "22BRIF", "31BRIG", "35BRIG", "51 BRINFS",
+            "62BRIG", "82BRIG", "92BRIG", "94BRIG", "TRINIG"
+        ];
+        
+        // ========== TABLA DE CORRECCIONES ==========
         const CORRECCIONES_UNIDADES = {
             "11BRIG": "11 BRIGADA",
             "22BRIF": "22 BRIGADA",
@@ -186,7 +194,6 @@
                 let nombreCorregido = CORRECCIONES_UNIDADES[nombreOriginal];
                 if (nombreCorregido && nombreCorregido !== nombreOriginal) {
                     cambios++;
-                    console.log(`✏️ Corregido: "${nombreOriginal}" → "${nombreCorregido}"`);
                     return { ...reg, unidad: nombreCorregido };
                 }
                 return reg;
@@ -195,6 +202,22 @@
                 guardarDatos();
                 console.log(`✅ Se corrigieron ${cambios} registros automáticamente`);
             }
+        }
+        
+        // Obtener unidades válidas (excluyendo las mal escritas)
+        function obtenerUnidadesValidas() {
+            // Unidades de la lista base
+            let unidadesValidas = [...UNIDADES_BASE];
+            
+            // Agregar unidades de registros que NO estén en la lista de excluidos
+            const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
+            unidadesDeRegistros.forEach(u => {
+                if (!NOMBRES_EXCLUIDOS.includes(u) && !unidadesValidas.includes(u)) {
+                    unidadesValidas.push(u);
+                }
+            });
+            
+            return unidadesValidas.sort();
         }
         
         function getFechaHoy() { return new Date().toISOString().split('T')[0]; }
@@ -211,7 +234,6 @@
             } else {
                 registros = [];
             }
-            // CORREGIR UNIDADES AUTOMÁTICAMENTE AL CARGAR
             corregirUnidadesExistentes();
             actualizarPaneles();
             console.log(`✅ Cargados ${registros.length} registros`);
@@ -222,20 +244,20 @@
             console.log(`💾 Guardados ${registros.length} registros`);
         }
         
-        function obtenerTodasLasUnidades() {
-            const unidadesDeRegistros = new Set(registros.map(r => r.unidad));
-            return [...new Set([...UNIDADES_BASE, ...unidadesDeRegistros])].sort();
-        }
-        
         function actualizarUnidades() {
-            const todas = obtenerTodasLasUnidades();
+            const unidadesValidas = obtenerUnidadesValidas();
             const select = document.getElementById('unidadAnalista');
             if(select) {
                 const actual = select.value;
                 select.innerHTML = '<option value="">-- Seleccione su unidad --</option>';
-                todas.forEach(u => { const opt = document.createElement('option'); opt.value = u; opt.textContent = u; select.appendChild(opt); });
+                unidadesValidas.forEach(u => { 
+                    const opt = document.createElement('option'); 
+                    opt.value = u; 
+                    opt.textContent = u; 
+                    select.appendChild(opt); 
+                });
                 select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
-                if(actual && (todas.includes(actual) || actual === "OTRA_UNIDAD")) select.value = actual;
+                if(actual && (unidadesValidas.includes(actual) || actual === "OTRA_UNIDAD")) select.value = actual;
             }
             const selectUnidad = document.getElementById('unidadAnalista');
             const campoNueva = document.getElementById('campoNuevaUnidad');
