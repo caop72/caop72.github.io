@@ -89,13 +89,15 @@
             border-radius: 12px;
             font-size: 16px;
         }
-        /* Quitar flechas de number input */
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none;
             margin: 0;
         }
-        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
         
         button[type="submit"] {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
@@ -254,8 +256,7 @@
                     <div class="form-group"><label>📖 Año del Libro:</label><input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required></div>
                     <div class="form-group"><label>🔢 Cédulas HOY:</label>
                         <input type="number" id="cedulasAnalista" placeholder="Cantidad" min="1" step="1" required
-                               onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault()"
-                               oninput="if(this.value < 0) this.value = 0">
+                               onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault()">
                     </div>
                     <div class="form-group"><label>📝 Observaciones:</label><input type="text" id="observacionesAnalista" placeholder="Ninguna"></div>
                     <button type="submit">✅ ENVIAR REGISTRO</button>
@@ -336,7 +337,7 @@
                         <h4>📈 ACUMULADO POR UNIDAD</h4>
                         <div class="tabla-container">
                             <table id="tablaAcumulado">
-                                <thead><tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
+                                <thead></tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
                                 <tbody id="tbodyAcumulado"></tbody>
                             </table>
                         </div>
@@ -413,8 +414,9 @@
                 if (loadingDiv) loadingDiv.style.display = 'block';
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
-                registros = Array.isArray(datos) ? datos : [];
-                console.log("Registros cargados:", registros.length);
+                // Filtrar registros con formato válido
+                registros = Array.isArray(datos) ? datos.filter(r => r.fecha && r.fecha.includes('-') && !r.fecha.includes('T')) : [];
+                console.log("Registros válidos cargados:", registros.length);
                 actualizarPaneles();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -509,8 +511,13 @@
             if (!nuevaUnidad) return;
             const nuevoLibro = prompt('Editar año del libro:', r.libro);
             if (!nuevoLibro) return;
-            const nuevasCedulas = prompt('Editar cantidad de cédulas:', r.cedulas);
+            let nuevasCedulas = prompt('Editar cantidad de cédulas (positivo):', r.cedulas);
             if (!nuevasCedulas) return;
+            nuevasCedulas = parseInt(nuevasCedulas);
+            if (isNaN(nuevasCedulas) || nuevasCedulas <= 0) {
+                alert('La cantidad debe ser un número positivo');
+                return;
+            }
             const nuevasObs = prompt('Editar observaciones:', r.observaciones || 'Ninguna');
             
             const registroEditado = {
@@ -518,7 +525,7 @@
                 cedulaAnalista: nuevaCedula,
                 unidad: nuevaUnidad,
                 libro: nuevoLibro,
-                cedulas: parseInt(nuevasCedulas),
+                cedulas: nuevasCedulas,
                 observaciones: nuevasObs || 'Ninguna'
             };
             
@@ -662,7 +669,7 @@
                     <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
                 </div>
                 <h4>📋 Detalle por Unidad</h4>
-                <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></td></thead>
                 <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
                 </table>
                 <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div></div>
@@ -699,7 +706,7 @@
             const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             const hora = getHoraLocal();
             
-            // Validar que cédulas sea un número positivo
+            // Validar cédulas (solo números positivos)
             if (isNaN(cedulas) || cedulas <= 0) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Las cédulas deben ser un número positivo mayor a cero</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
