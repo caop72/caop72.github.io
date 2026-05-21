@@ -225,7 +225,6 @@
                 <button class="btn-volver" id="volverAnalista">← Volver</button>
             </div>
             
-            <!-- Formulario de datos del analista (BLOQUE 1) -->
             <div class="form-analista" id="formularioAnalista">
                 <h3 style="margin-bottom: 15px;">🔐 1. TUS DATOS (una sola vez)</h3>
                 <form id="formDatosAnalista">
@@ -248,7 +247,6 @@
                 <div id="mensajeAnalistaSesion"></div>
             </div>
             
-            <!-- Formulario de carga de reservistas (BLOQUE 2) - visible después de iniciar sesión -->
             <div id="formularioCarga" style="display: none;">
                 <div class="lote-actual">
                     <h4>📋 LOTE ACTUAL</h4>
@@ -277,7 +275,6 @@
                     <div id="mensajeReservista"></div>
                 </div>
                 
-                <!-- Resumen del lote actual -->
                 <div id="resumenLote" style="display: none;">
                     <h4>📊 RESERVISTAS EN ESTE LOTE</h4>
                     <div class="tabla-lote">
@@ -371,7 +368,7 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbFd2GOgv4nSAt_TqoNjQojPgy97JZF_jnUTBiAPJ2vpAD3HG0IN1mk84dothH49b9/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxm8jgHkMKlMiuMjgewSCHhQVZ-IiXsS0heECqVnIgMlh0HqJF6q7yxuiuxLupNnnu6/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -513,7 +510,7 @@
             if (tbody) {
                 const ordenados = [...registrosReservistas].reverse();
                 if (ordenados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay reservistas registrados</div></div></td>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay reservistas registrados</div></div><tr>';
                 } else {
                     tbody.innerHTML = ordenados.map((r, i) => `
                         <tr>
@@ -691,7 +688,7 @@
             actualizarResumenLote();
         });
         
-        // AGREGAR RESERVISTA(S) AL LOTE - CORREGIDO (acepta espacios después de coma)
+        // AGREGAR RESERVISTA(S) AL LOTE
         document.getElementById('formReservista').addEventListener('submit', function(e) {
             e.preventDefault();
             const libro = document.getElementById('libroReservista').value.trim();
@@ -710,7 +707,6 @@
                 return;
             }
             
-            // Separar cédulas por coma (ignorando espacios)
             const cedulasArray = cedulasTexto.split(',').map(c => c.trim()).filter(c => c !== '');
             
             if (cedulasArray.length === 0) {
@@ -796,7 +792,6 @@
             }
         });
         
-        // Manejar cambio en select de unidad del analista
         document.getElementById('unidadAnalistaPrincipal').addEventListener('change', function() {
             const campoNueva = document.getElementById('campoNuevaUnidadPrincipal');
             if (this.value === "OTRA_UNIDAD") {
@@ -807,7 +802,6 @@
             }
         });
         
-        // EVENTOS GENERALES
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
         document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
         document.getElementById('volverAnalista').addEventListener('click', volverInicio);
