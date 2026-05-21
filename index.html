@@ -466,6 +466,18 @@
             else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
         }
         
+        // ⟶ Aquí se actualiza el conteo de cédulas del día seleccionado
+        function actualizarTotalHojeado() {
+            if (!fechaSeleccionada) {
+                document.getElementById('totalHoy').innerText = 0;
+                return;
+            }
+            const total = registros
+                .filter(r => r.fecha === fechaSeleccionada)
+                .reduce((sum, r) => sum + (r.cedulas || 0), 0);
+            document.getElementById('totalHoy').innerText = total;
+        }
+        
         function actualizarRegistrosPorFecha() {
             if (!fechaSeleccionada) return;
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
@@ -473,7 +485,7 @@
             if (label) label.innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<td><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
             } else {
                 tbody.innerHTML = filtrados.map((r, idx) => `
                     <tr>
@@ -490,6 +502,8 @@
                     </tr>
                 `).join('');
             }
+            // Actualiza el total de cédulas del día mostrado
+            actualizarTotalHojeado();
         }
         
         async function eliminarRegistro(index) {
@@ -582,7 +596,7 @@
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
                 if (unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<td><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
                 } else {
                     tbodyAcum.innerHTML = unidades.map(u => `
                         <tr>
@@ -600,7 +614,7 @@
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelAnalista').classList.add('panel-activo');
             document.getElementById('fechaAnalista').value = getFechaHoy();
-            ['cedulaAnalista','nuevaUnidadTexto','libroAnalista','cedulasAnalista','observacionesAnalista'].forEach(id=>document.getElementById(id).value='');
+            ['cedulaAnalista','nuevaUnidadTexto','libroAnalista','cedulasAnalista','observacionesAnalista'].forEach(id=>document.getElementById(id).value='';
             document.getElementById('unidadAnalista').value = '';
             actualizarSelectUnidad();
         }
@@ -699,7 +713,7 @@
                     </table>
                     <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div>
                 </div>
-                <script>setTimeout(()=>window.print(),500);<\/script>
+                <script>setTimeout(()=>window.print(),500);<\\/script>
             </body>
             </html>`);
             win.document.close();
