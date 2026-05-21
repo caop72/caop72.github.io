@@ -232,7 +232,6 @@
             </div>
         </div>
 
-        <!-- PANEL ANALISTA -->
         <div id="panelAnalista" class="panel">
             <div class="header-panel">
                 <h2>📝 REGISTRO PARA ANALISTAS</h2>
@@ -258,7 +257,6 @@
             </div>
         </div>
 
-        <!-- PANEL OPERADOR -->
         <div id="panelOperador" class="panel">
             <div class="header-panel">
                 <h2>🔐 OPERADOR PRINCIPAL</h2>
@@ -332,7 +330,7 @@
                         </div>
                     </div>
 
-                    <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME PARA EL COMANDO SUPERIOR</button>
+                    <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME</button>
                 </div>
             </div>
         </div>
@@ -367,14 +365,14 @@
         
         function getHoraLocal() { 
             const d = new Date(); 
-            const horas = d.getHours().toString().padStart(2,'0');
-            const minutos = d.getMinutes().toString().padStart(2,'0');
-            const segundos = d.getSeconds().toString().padStart(2,'0');
-            return `${horas}:${minutos}:${segundos}`; 
+            return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; 
         }
         
         function formatearFechaDDMMAAAA(fechaStr) {
             if (!fechaStr) return '---';
+            // Si ya viene en formato DD/MM/AAAA, devolver igual
+            if (fechaStr.includes('/')) return fechaStr;
+            // Si viene en formato YYYY-MM-DD
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
                 return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -387,7 +385,7 @@
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
                 const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
-                return `${partes[2]} ${meses[parseInt(partes[1])-1]} ${partes[0]}`;
+                return `${parseInt(partes[2])} ${meses[parseInt(partes[1])-1]} ${partes[0]}`;
             }
             return fechaStr;
         }
@@ -406,7 +404,8 @@
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
                 registros = Array.isArray(datos) ? datos : [];
-                console.log(`✅ Cargados ${registros.length} registros`);
+                console.log("Registros cargados:", registros);
+                console.log("Fechas en registros:", registros.map(r => r.fecha));
                 actualizarPaneles();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -460,24 +459,29 @@
         
         function actualizarRegistrosPorFecha() {
             if (!fechaSeleccionada) return;
+            console.log("Filtrando por fecha:", fechaSeleccionada);
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
+            console.log("Registros filtrados:", filtrados.length);
             document.getElementById('fechaSeleccionadaLabel').innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
-            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="7">⚠️ Sin registros en esta fecha</td><tr>';
-            else tbody.innerHTML = filtrados.map((r, idx) => `
-                <tr>
-                    <td>${r.hora || '00:00:00'}</td>
-                    <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
-                    <td>${r.unidad || 'N/A'}</td>
-                    <td>${r.libro || 'N/A'}</td>
-                    <td><strong>${r.cedulas || 0}</strong></td>
-                    <td>${r.observaciones || 'Ninguna'}</td>
-                    <td>
-                        <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
-                        <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
-                    </td>
-                </tr>
-            `).join('');
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
+            } else {
+                tbody.innerHTML = filtrados.map((r, idx) => `
+                    <tr>
+                        <td>${r.hora || '00:00:00'}</td>
+                        <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
+                        <td>${r.unidad || 'N/A'}</td>
+                        <td>${r.libro || 'N/A'}</td>
+                        <td><strong>${r.cedulas || 0}</strong></td>
+                        <td>${r.observaciones || 'Ninguna'}</td>
+                        <td>
+                            <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
+                            <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
         }
         
         async function eliminarRegistro(index) {
@@ -519,6 +523,8 @@
             actualizarSelectUnidad();
             
             const hoy = getFechaHoy();
+            console.log("Fecha actual (hoy):", hoy);
+            
             const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + (r.cedulas || 0), 0);
             let totalCedulas = 0, acumulado = {}, analistasPorUnidad = {}, analistasSet = new Set();
             
@@ -530,6 +536,8 @@
                 if (r.cedulaAnalista) analistasSet.add(r.cedulaAnalista);
             });
             
+            console.log("Total cédulas hoy:", totalHoy);
+            
             document.getElementById('totalHoy').innerText = totalHoy;
             document.getElementById('totalRegistros').innerText = registros.length;
             document.getElementById('totalAcumulado').innerText = totalCedulas;
@@ -539,36 +547,42 @@
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
-                if (ordenados.length === 0) tbodyTodos.innerHTML = '<td><td colspan="9">⚠️ Sin datos</td></tr>';
-                else tbodyTodos.innerHTML = ordenados.map((r, i) => `
-                    <tr>
-                        <td>${i+1}</td>
-                        <td><strong>${formatearFechaDDMMAAAA(r.fecha)}</strong></td>
-                        <td>${r.hora || '00:00:00'}</td>
-                        <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
-                        <td>${r.unidad || 'N/A'}</td>
-                        <td>${r.libro || 'N/A'}</td>
-                        <td><strong>${r.cedulas || 0}</strong></td>
-                        <td>${r.observaciones || 'Ninguna'}</td>
-                        <td>
-                            <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
-                            <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
-                        </td>
-                    </tr>
-                `).join('');
+                if (ordenados.length === 0) {
+                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ Sin datos</td></tr>';
+                } else {
+                    tbodyTodos.innerHTML = ordenados.map((r, i) => `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td><strong>${formatearFechaDDMMAAAA(r.fecha)}</strong></td>
+                            <td>${r.hora || '00:00:00'}</td>
+                            <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
+                            <td>${r.unidad || 'N/A'}</td>
+                            <td>${r.libro || 'N/A'}</td>
+                            <td><strong>${r.cedulas || 0}</strong></td>
+                            <td>${r.observaciones || 'Ninguna'}</td>
+                            <td>
+                                <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
+                                <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
+                            </td>
+                        </tr>
+                    `).join('');
+                }
             }
             
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
-                if (unidades.length === 0) tbodyAcum.innerHTML = '<td><td colspan="3">⚠️ Sin datos</td></tr>';
-                else tbodyAcum.innerHTML = unidades.map(u => `
-                    <tr>
-                        <td>${u}</td>
-                        <td><strong>${acumulado[u]}</strong></td>
-                        <td>${analistasPorUnidad[u].size} analista(s)</td>
-                    </tr>
-                `).join('');
+                if (unidades.length === 0) {
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
+                } else {
+                    tbodyAcum.innerHTML = unidades.map(u => `
+                        <tr>
+                            <td>${u}</td>
+                            <td><strong>${acumulado[u]}</strong></td>
+                            <td>${analistasPorUnidad[u].size} analista(s)</td>
+                        </tr>
+                    `).join('');
+                }
             }
             if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
@@ -655,7 +669,6 @@
         window.eliminarRegistro = eliminarRegistro;
         window.editarRegistro = editarRegistro;
         
-        // EVENTOS
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
         document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
         document.getElementById('volverAnalista').addEventListener('click', volverInicio);
@@ -683,21 +696,21 @@
             const hora = getHoraLocal();
             
             if (libro && !/^\d{4}$/.test(libro)) {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ 4 dígitos</div>';
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
                 return;
             }
             let unidadFinal = "";
             if (unidad === "OTRA_UNIDAD") {
-                if (!nuevaUnidad) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba nueva unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
+                if (!nuevaUnidad) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
                 unidadFinal = nuevaUnidad;
-            } else { unidadFinal = unidad; if (!unidadFinal) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; } }
-            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todo</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
-            if (!/^\d+$/.test(cedula)) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Cédula solo números</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
+            } else { unidadFinal = unidad; if (!unidadFinal) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; } }
+            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
+            if (!/^\d+$/.test(cedula)) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
             const exito = await guardarEnNube({ fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora });
-            document.getElementById('mensajeAnalista').innerHTML = exito ? '<div class="mensaje-exito">✅ Guardado en la nube!</div>' : '<div class="mensaje-error">⚠️ Error</div>';
+            document.getElementById('mensajeAnalista').innerHTML = exito ? '<div class="mensaje-exito">✅ ¡Registro guardado en la nube!</div>' : '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
             
             document.getElementById('cedulaAnalista').value = '';
             document.getElementById('unidadAnalista').value = '';
