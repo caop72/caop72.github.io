@@ -130,32 +130,6 @@
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
         
-        .filtro-fecha {
-            background: #f8f9fa;
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        .filtro-fecha label { font-weight: 600; color: #1e3c72; }
-        .filtro-fecha input {
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-        .filtro-fecha button {
-            background: #1e3c72;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-        
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
         .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
@@ -306,28 +280,23 @@
                         </div>
                     </div>
 
-                    <div class="filtro-fecha">
-                        <label>📅 Ver registros de la fecha:</label>
-                        <input type="date" id="fechaFiltro">
-                        <button id="btnFiltrarFecha">🔍 Ver registros</button>
-                        <button id="btnMostrarHoy" style="background:#ff9800;">📆 Mostrar hoy</button>
-                    </div>
-
-                    <div class="seccion-tabla">
-                        <h4>📋 REGISTROS DEL DÍA <span id="fechaSeleccionadaLabel"></span></h4>
-                        <div class="tabla-container">
-                            <table id="tablaRegistrosFecha">
-                                <thead><tr><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
-                                <tbody id="tbodyRegistrosFecha"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
                     <div class="seccion-tabla">
                         <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
                         <div class="tabla-container">
                             <table id="tablaTodosRegistros">
-                                <thead><tr><th>#</th><th>FECHA</th><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>FECHA</th>
+                                        <th>HORA</th>
+                                        <th>ANALISTA</th>
+                                        <th>UNIDAD</th>
+                                        <th>AÑO</th>
+                                        <th>CÉDULAS</th>
+                                        <th>OBSERVACIONES</th>
+                                        <th>ACCIÓN</th>
+                                    </tr>
+                                </thead>
                                 <tbody id="tbodyTodosRegistros"></tbody>
                             </table>
                         </div>
@@ -366,7 +335,6 @@
         ];
         
         let registros = [];
-        let fechaSeleccionada = "";
 
         function pad2(n) {
             return String(n).padStart(2, '0');
@@ -431,7 +399,6 @@
                 registros = Array.isArray(datos) ? datos : [];
                 console.log("Registros cargados:", registros.length);
                 actualizarPaneles();
-                if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
             } catch(e) {
                 console.error('Error:', e);
@@ -482,59 +449,12 @@
             else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
         }
         
-        function actualizarRegistrosPorFecha() {
-            if (!fechaSeleccionada) return;
-            const fechaNorm = normalizarFecha(fechaSeleccionada);
-            const filtrados = registros.filter(r => normalizarFecha(r.fecha) === fechaNorm);
-            const label = document.getElementById('fechaSeleccionadaLabel');
-            if (label) label.innerText = formatearFechaVisible(fechaNorm);
-
-            const tbody = document.getElementById('tbodyRegistrosFecha');
-            if (filtrados.length === 0) {
-                tbody.innerHTML = '<td><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
-            } else {
-                tbody.innerHTML = filtrados.map((r) => {
-                    return `
-                        <tr>
-                            <td>${formatearHoraVisible(r.hora)}</td>
-                            <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
-                            <td>${r.unidad || 'N/A'}</td>
-                            <td>${r.libro || 'N/A'}</td>
-                            <td><strong>${parseInt(r.cedulas) || 0}</strong></td>
-                            <td>${r.observaciones || 'Ninguna'}</td>
-                            <td>
-                                <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
-                                <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-
-            document.getElementById('totalHoy').innerText = totalDeFecha(fechaNorm);
-        }
-        
         async function eliminarRegistro(index) {
             if (confirm('¿Eliminar este registro permanentemente?')) {
-                const registroAEliminar = registros[index];
-                // Para eliminar, necesitamos reconstruir todos los registros sin este
-                const nuevosRegistros = registros.filter((_, i) => i !== index);
-                
-                // Limpiar la hoja y volver a guardar todos los registros excepto el eliminado
-                // Primero, necesitamos una forma de reemplazar todos los datos
-                try {
-                    // Como no podemos eliminar directamente de Sheets, hacemos una limpieza local
-                    // y luego recargamos desde la nube
-                    registros = nuevosRegistros;
-                    // Guardamos el array actualizado (esto es local)
-                    localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
-                    alert('✅ Registro eliminado localmente. Para sincronizar con la nube, recargue la página.');
-                    actualizarPaneles();
-                    if (fechaSeleccionada) actualizarRegistrosPorFecha();
-                } catch(e) {
-                    console.error('Error al eliminar:', e);
-                    alert('❌ Error al eliminar');
-                }
+                registros.splice(index, 1);
+                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
+                actualizarPaneles();
+                alert('✅ Registro eliminado');
             }
         }
         
@@ -565,15 +485,10 @@
                 hora: r.hora || getHoraLocal()
             };
             
-            // Eliminar el antiguo y agregar el nuevo
-            registros.splice(index, 1);
-            registros.push(registroEditado);
-            
-            // Guardar localmente
+            registros[index] = registroEditado;
             localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
-            alert('✅ Registro editado localmente. Para sincronizar con la nube, recargue la página.');
+            alert('✅ Registro editado');
             actualizarPaneles();
-            if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
         
         function actualizarPaneles() {
@@ -650,8 +565,6 @@
                     `).join('');
                 }
             }
-
-            if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
         
         function mostrarAnalista() {
@@ -669,8 +582,6 @@
             document.getElementById('passwordOperador').style.display = 'block';
             document.getElementById('contenidoOperador').style.display = 'none';
             document.getElementById('claveOperador').value = '';
-            fechaSeleccionada = getFechaHoy();
-            document.getElementById('fechaFiltro').value = fechaSeleccionada;
         }
         
         function volverInicio() {
@@ -685,17 +596,6 @@
                 document.getElementById('contenidoOperador').style.display = 'block';
                 await cargarDatosDesdeNube();
             } else alert('❌ Clave incorrecta');
-        }
-        
-        function filtrarPorFecha() {
-            fechaSeleccionada = document.getElementById('fechaFiltro').value;
-            actualizarRegistrosPorFecha();
-        }
-        
-        function mostrarHoy() {
-            fechaSeleccionada = getFechaHoy();
-            document.getElementById('fechaFiltro').value = fechaSeleccionada;
-            actualizarRegistrosPorFecha();
         }
         
         function generarInforme() {
@@ -777,8 +677,6 @@
         document.getElementById('volverOperador').addEventListener('click', volverInicio);
         document.getElementById('btnIngresarOperador').addEventListener('click', ingresarOperador);
         document.getElementById('btnGenerarInforme').addEventListener('click', generarInforme);
-        document.getElementById('btnFiltrarFecha').addEventListener('click', filtrarPorFecha);
-        document.getElementById('btnMostrarHoy').addEventListener('click', mostrarHoy);
         
         document.getElementById('unidadAnalista').addEventListener('change', function() {
             const campo = document.getElementById('campoNuevaUnidad');
@@ -854,7 +752,6 @@
         });
         
         actualizarSelectUnidad();
-        cargarDatosDesdeNube();
     </script>
 </body>
 </html>
