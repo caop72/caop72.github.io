@@ -123,10 +123,6 @@
                                 <input type="text" id="unidadRReservista" placeholder="Ej: 11 BRIGADA" required>
                             </div>
                             <div class="form-group">
-                                <label>📅 Desde (Año de alta/ingreso):</label>
-                                <input type="text" id="desdeReservista" placeholder="Ej: 1990" maxlength="4" required>
-                            </div>
-                            <div class="form-group">
                                 <label>🆔 Cédula(s) del reservista (separadas por coma):</label>
                                 <input type="text" id="cedulaRReservista" placeholder="Ej: 11526483, 12827266" required>
                                 <small style="color: #666;">Puedes escribir varias cédulas separadas por coma</small>
@@ -248,7 +244,6 @@
             return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
         }
         
-        // Cargar Base de Datos General
         async function cargarDatosDesdeNube() {
             const loadingDiv = document.getElementById('loadingData');
             try {
@@ -264,7 +259,6 @@
             }
         }
         
-        // Enviar lote completo a Google Sheets
         async function guardarReservistas(reservistas) {
             try {
                 for (const r of reservistas) {
@@ -291,10 +285,9 @@
             }
         }
 
-        // Eliminar fila real en la Base de Datos
         async function eliminarReservista(index) {
             const objetivo = registrosReservistas[index];
-            if (confirm(`¿Seguro que deseas eliminar permanentemente al reservista C.I: ${objetivo.cedula_r} de la nube?`)) {
+            if (confirm(`¿Eliminar permanentemente al reservista C.I: ${objetivo.cedula_r}?`)) {
                 try {
                     await fetch(SCRIPT_URL, {
                         method: 'POST',
@@ -306,10 +299,10 @@
                             timestamp: objetivo.timestamp
                         })
                     });
-                    alert('✅ Comando de eliminación enviado. Recargando datos...');
+                    alert('✅ Registro eliminado');
                     setTimeout(cargarDatosDesdeNube, 1000);
                 } catch (e) {
-                    alert('❌ Error al intentar eliminar.');
+                    alert('❌ Error');
                 }
             }
         }
@@ -337,7 +330,6 @@
             if (incluirOtra) select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
         }
         
-        // Actualizar estadísticas y tabla del panel Operador Principal
         function actualizarPanelOperador() {
             const hoy = getFechaHoy();
             const reservistasHoy = registrosReservistas.filter(r => {
@@ -358,20 +350,20 @@
             if (tbody) {
                 const mostrados = [...registrosReservistas].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros en la base de datos.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.length - 1 - i;
                         return `<tr>
-                            <td>${i+1}</td>
-                            <td>${formatearFechaVisible(r.timestamp)}</td>
-                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></td>
-                            <td>${r.unidad_analista || 'N/A'}</td>
-                            <td>${r.libro || 'N/A'}</td>
-                            <td>${r.unidad_r || 'N/A'}</td>
-                            <td><strong>${r.cedula_r || 'N/A'}</strong></td>
-                            <td>${r.desde || 'N/A'}</td>
-                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></td>
+                            <td>${i+1} </div> </div>
+                            <td>${formatearFechaVisible(r.timestamp)}</div> </div>
+                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></div> </div>
+                            <td>${r.unidad_analista || 'N/A'} </div> </div>
+                            <td>${r.libro || 'N/A'} </div> </div>
+                            <td>${r.unidad_r || 'N/A'} </div> </div>
+                            <td><strong>${r.cedula_r || 'N/A'}</strong></div> </div>
+                            <td>${r.desde || 'N/A'} </div> </div>
+                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></div> </div>
                         </tr>`;
                     }).join('');
                 }
@@ -387,12 +379,12 @@
             document.getElementById('resumenLote').style.display = 'block';
             tbody.innerHTML = loteActual.map((r, i) => `
                 <tr>
-                    <td>${i+1}</td>
-                    <td>${r.cedula_r}</td>
-                    <td>${r.unidad_r}</td>
-                    <td>${r.libro}</td>
-                    <td>${r.desde}</td>
-                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></td>
+                    <td>${i+1} </div> </div>
+                    <td>${r.cedula_r} </div> </div>
+                    <td>${r.unidad_r} </div> </div>
+                    <td>${r.libro} </div> </div>
+                    <td>${r.desde} </div> </div>
+                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></div> </div>
                 </tr>
             `).join('');
             document.getElementById('totalLote').innerText = loteActual.length;
@@ -405,7 +397,7 @@
         
         window.eliminarReservista = eliminarReservista;
 
-        // MANEJO DE EVENTOS DE INTERFAZ
+        // EVENTOS
         document.getElementById('btnAnalista').addEventListener('click', () => {
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelAnalista').classList.add('panel-activo');
@@ -439,16 +431,37 @@
             document.getElementById('formularioCarga').style.display = 'block';
         });
 
+        // AGREGAR RESERVISTA(S) AL LOTE - CORREGIDO (DESDE SE CALCULA AUTOMÁTICAMENTE)
         document.getElementById('formReservista').addEventListener('submit', (e) => {
             e.preventDefault();
             const libro = document.getElementById('libroReservista').value.trim();
             const unidadR = document.getElementById('unidadRReservista').value.toUpperCase().trim();
-            const desde = document.getElementById('desdeReservista').value.trim();
             const cedulasRaw = document.getElementById('cedulaRReservista').value;
-
+            
+            if (!libro || !unidadR || !cedulasRaw) {
+                document.getElementById('mensajeReservista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
+                return;
+            }
+            
+            if (!/^\d{4}$/.test(libro)) {
+                document.getElementById('mensajeReservista').innerHTML = '<div class="mensaje-error">❌ El libro debe ser un año de 4 dígitos</div>';
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
+                return;
+            }
+            
+            // Calcular 'desde' automáticamente (libro - 2)
+            const desde = (parseInt(libro) - 2).toString();
+            
             const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
-
-            listaCedulas.forEach(cedula => {
+            let agregadas = 0;
+            let errores = [];
+            
+            for (const cedula of listaCedulas) {
+                if (!/^\d+$/.test(cedula)) {
+                    errores.push(cedula);
+                    continue;
+                }
                 loteActual.push({
                     timestamp: new Date().toISOString(),
                     cedula_analista: datosAnalista.cedula,
@@ -458,8 +471,17 @@
                     cedula_r: cedula,
                     desde: desde
                 });
-            });
-
+                agregadas++;
+            }
+            
+            if (errores.length > 0) {
+                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-error">⚠️ Cédulas inválidas: ${errores.join(', ')}</div>`;
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 3000);
+            } else {
+                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-exito">✅ ${agregadas} reservista(s) agregado(s)</div>`;
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
+            }
+            
             document.getElementById('cedulaRReservista').value = '';
             actualizarResumenLote();
         });
@@ -467,22 +489,23 @@
         document.getElementById('btnConfirmarLote').addEventListener('click', async () => {
             if (loteActual.length === 0) return;
             document.getElementById('btnConfirmarLote').disabled = true;
-            document.getElementById('btnConfirmarLote').innerText = '⏳ ENVIANDO LOTE...';
+            document.getElementById('btnConfirmarLote').innerText = '⏳ ENVIANDO...';
             
             const exito = await guardarReservistas(loteActual);
             if (exito) {
-                alert('✅ Lote enviado e indexado con éxito en Google Sheets.');
+                alert('✅ Lote enviado exitosamente');
                 loteActual = [];
                 actualizarResumenLote();
+                await cargarDatosDesdeNube();
             } else {
-                alert('❌ Error de red al procesar el lote.');
+                alert('❌ Error al enviar');
             }
             document.getElementById('btnConfirmarLote').disabled = false;
             document.getElementById('btnConfirmarLote').innerText = '✅ CONFIRMAR Y ENVIAR LOTE';
         });
 
         document.getElementById('btnCancelarLote').addEventListener('click', () => {
-            if (confirm('¿Vaciar todos los registros del lote actual?')) {
+            if (confirm('¿Vaciar el lote actual?')) {
                 loteActual = [];
                 actualizarResumenLote();
             }
@@ -499,7 +522,7 @@
                 document.getElementById('contenidoOperador').style.display = 'block';
                 cargarDatosDesdeNube();
             } else {
-                alert('❌ Clave de operador inválida');
+                alert('❌ Clave incorrecta');
             }
         });
 
@@ -511,12 +534,12 @@
             const win = window.open();
             win.document.write(`
                 <html>
-                <head><title>Informe Express</title></head>
+                <head><title>Informe</title></head>
                 <body style="font-family:sans-serif; padding:20px;">
-                    <h2>📄 Reporte Consolidado Digitalización</h2>
-                    <p>Fecha de Extracción: ${ahora.toLocaleString()}</p>
+                    <h2>📄 Reporte Consolidado</h2>
+                    <p>Fecha: ${ahora.toLocaleString()}</p>
                     <hr/>
-                    <h3>Total Reservistas Digitalizados: ${registrosReservistas.length}</h3>
+                    <h3>Total Reservistas: ${registrosReservistas.length}</h3>
                 </body>
                 </html>
             `);
