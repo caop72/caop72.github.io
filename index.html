@@ -329,7 +329,7 @@
                             <table id="tablaTodosRegistros">
                                 <thead><tr><th>#</th><th>FECHA</th><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
                                 <tbody id="tbodyTodosRegistros"></tbody>
-                            </table>
+                            </tr>
                         </div>
                     </div>
 
@@ -466,7 +466,6 @@
             else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
         }
         
-        // ⟶ Aquí se actualiza el conteo de cédulas del día seleccionado
         function actualizarTotalHojeado() {
             if (!fechaSeleccionada) {
                 document.getElementById('totalHoy').innerText = 0;
@@ -485,7 +484,7 @@
             if (label) label.innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
+                tbody.innerHTML = '<td><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
             } else {
                 tbody.innerHTML = filtrados.map((r, idx) => `
                     <tr>
@@ -502,7 +501,6 @@
                     </tr>
                 `).join('');
             }
-            // Actualiza el total de cédulas del día mostrado
             actualizarTotalHojeado();
         }
         
@@ -614,7 +612,7 @@
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelAnalista').classList.add('panel-activo');
             document.getElementById('fechaAnalista').value = getFechaHoy();
-            ['cedulaAnalista','nuevaUnidadTexto','libroAnalista','cedulasAnalista','observacionesAnalista'].forEach(id=>document.getElementById(id).value='';
+            ['cedulaAnalista','nuevaUnidadTexto','libroAnalista','cedulasAnalista','observacionesAnalista'].forEach(id => document.getElementById(id).value = '');
             document.getElementById('unidadAnalista').value = '';
             actualizarSelectUnidad();
         }
@@ -708,12 +706,12 @@
                         <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
                     </div>
                     <h4>📋 Detalle por Unidad</h4>
-                    <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                    <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th><tr></thead>
                     <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
                     </table>
                     <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div>
                 </div>
-                <script>setTimeout(()=>window.print(),500);<\\/script>
+                <script>setTimeout(()=>window.print(),500);<\/script>
             </body>
             </html>`);
             win.document.close();
