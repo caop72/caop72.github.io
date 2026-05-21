@@ -365,9 +365,12 @@
             return `${year}-${month}-${day}`;
         }
         
-        function getHora() { 
+        function getHoraLocal() { 
             const d = new Date(); 
-            return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; 
+            const horas = d.getHours().toString().padStart(2,'0');
+            const minutos = d.getMinutes().toString().padStart(2,'0');
+            const segundos = d.getSeconds().toString().padStart(2,'0');
+            return `${horas}:${minutos}:${segundos}`; 
         }
         
         function formatearFechaDDMMAAAA(fechaStr) {
@@ -428,7 +431,11 @@
         
         function obtenerUnidades() {
             let unidades = [...UNIDADES_BASE];
-            registros.forEach(r => { if (r.unidad && !unidades.includes(r.unidad)) unidades.push(r.unidad); });
+            registros.forEach(r => { 
+                if (r.unidad && !unidades.includes(r.unidad)) {
+                    unidades.push(r.unidad);
+                }
+            });
             return unidades.sort();
         }
         
@@ -456,7 +463,7 @@
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
             document.getElementById('fechaSeleccionadaLabel').innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
-            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="7">⚠️ Sin registros en esta fecha</td></tr>';
+            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="7">⚠️ Sin registros en esta fecha</td><tr>';
             else tbody.innerHTML = filtrados.map((r, idx) => `
                 <tr>
                     <td>${r.hora || '00:00:00'}</td>
@@ -532,7 +539,7 @@
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
-                if (ordenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="9">⚠️ Sin datos</td></tr>';
+                if (ordenados.length === 0) tbodyTodos.innerHTML = '<td><td colspan="9">⚠️ Sin datos</td></tr>';
                 else tbodyTodos.innerHTML = ordenados.map((r, i) => `
                     <tr>
                         <td>${i+1}</td>
@@ -554,9 +561,13 @@
             const tbodyAcum = document.getElementById('tbodyAcumulado');
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
-                if (unidades.length === 0) tbodyAcum.innerHTML = '<tr><td colspan="3">⚠️ Sin datos</td></tr>';
+                if (unidades.length === 0) tbodyAcum.innerHTML = '<td><td colspan="3">⚠️ Sin datos</td></tr>';
                 else tbodyAcum.innerHTML = unidades.map(u => `
-                    <tr><td>${u}</td><td><strong>${acumulado[u]}</strong></td><td>${analistasPorUnidad[u].size} analista(s)</td></tr>
+                    <tr>
+                        <td>${u}</td>
+                        <td><strong>${acumulado[u]}</strong></td>
+                        <td>${analistasPorUnidad[u].size} analista(s)</td>
+                    </tr>
                 `).join('');
             }
             if (fechaSeleccionada) actualizarRegistrosPorFecha();
@@ -607,7 +618,6 @@
         }
         
         function generarInforme() {
-            const ahora = new Date();
             const fechaCorta = formatearFechaParaInforme(getFechaHoy());
             const hoy = getFechaHoy();
             const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + (r.cedulas || 0), 0);
@@ -670,7 +680,7 @@
             const libro = document.getElementById('libroAnalista').value.trim();
             const cedulas = parseInt(document.getElementById('cedulasAnalista').value);
             const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
-            const hora = getHora();
+            const hora = getHoraLocal();
             
             if (libro && !/^\d{4}$/.test(libro)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ 4 dígitos</div>';
