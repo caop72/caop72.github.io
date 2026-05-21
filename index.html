@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Jornada de Digitalización - Reserva Militar</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -104,7 +103,7 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin-bottom: 25px;
         }
@@ -115,8 +114,11 @@
             border-radius: 16px;
             text-align: center;
         }
+        .stat-card-azul {
+            background: linear-gradient(135deg, #2196F3 0%, #0b5e9e 100%);
+        }
         .stat-number { font-size: 28px; font-weight: bold; }
-        .stat-label { font-size: 11px; opacity: 0.9; }
+        .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
         
         .filtro-fecha {
             background: #f8f9fa;
@@ -144,15 +146,6 @@
             cursor: pointer;
         }
         
-        .grafica-container {
-            background: #f8f9fa;
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 25px;
-        }
-        .grafica-container h4 { color: #1e3c72; margin-bottom: 15px; font-size: 18px; }
-        canvas { max-height: 300px; width: 100%; }
-        
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
         .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
@@ -170,8 +163,6 @@
         }
         .btn-editar { background: #ffc107; color: #1e3c72; }
         .btn-eliminar { background: #dc3545; color: white; }
-        .btn-guardar { background: #28a745; color: white; }
-        .btn-cancelar { background: #6c757d; color: white; }
         
         .password-area { text-align: center; padding: 30px 20px; }
         .password-area input {
@@ -217,10 +208,6 @@
             vertical-align: middle;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .editando {
-            background-color: #fff3cd;
-        }
         
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -286,10 +273,26 @@
                 <div id="loadingData" class="loading" style="display: none;"><div class="spinner"></div> Cargando datos...</div>
                 <div id="dataContent">
                     <div class="stats-grid">
-                        <div class="stat-card"><div class="stat-number" id="totalRegistros">0</div><div class="stat-label">TOTAL REGISTROS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalAcumulado">0</div><div class="stat-label">CÉDULAS ACUMULADAS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalAnalistas">0</div><div class="stat-label">ANALISTAS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">DÍAS TRABAJADOS</div></div>
+                        <div class="stat-card stat-card-azul">
+                            <div class="stat-number" id="totalHoy">0</div>
+                            <div class="stat-label">📊 CÉDULAS DEL DÍA</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRegistros">0</div>
+                            <div class="stat-label">📋 REGISTROS TOTALES</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAcumulado">0</div>
+                            <div class="stat-label">💰 CÉDULAS ACUMULADAS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAnalistas">0</div>
+                            <div class="stat-label">👥 ANALISTAS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="diasTrabajados">0</div>
+                            <div class="stat-label">📅 DÍAS TRABAJADOS</div>
+                        </div>
                     </div>
 
                     <div class="filtro-fecha">
@@ -309,13 +312,8 @@
                         </div>
                     </div>
 
-                    <div class="grafica-container">
-                        <h4>📊 AVANCE DIARIO (solo días con registros)</h4>
-                        <canvas id="graficaAvance" width="400" height="200"></canvas>
-                    </div>
-
                     <div class="seccion-tabla">
-                        <h4>📋 TODOS LOS REGISTROS</h4>
+                        <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
                         <div class="tabla-container">
                             <table id="tablaTodosRegistros">
                                 <thead><tr><th>#</th><th>FECHA</th><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
@@ -328,13 +326,13 @@
                         <h4>📈 ACUMULADO POR UNIDAD</h4>
                         <div class="tabla-container">
                             <table id="tablaAcumulado">
-                                <thead><tr><th>UNIDAD</th><th>TOTAL</th><th>ANALISTAS</th></tr></thead>
+                                <thead><tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
                                 <tbody id="tbodyAcumulado"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME</button>
+                    <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME PARA EL COMANDO SUPERIOR</button>
                 </div>
             </div>
         </div>
@@ -357,9 +355,7 @@
         ];
         
         let registros = [];
-        let miGrafica = null;
         let fechaSeleccionada = "";
-        let registroEditando = null;
         
         function getFechaHoy() { 
             const hoy = new Date();
@@ -374,16 +370,30 @@
             return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`; 
         }
         
-        function formatearFecha(fechaStr) {
+        function formatearFechaDDMMAAAA(fechaStr) {
             if (!fechaStr) return '---';
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
-                const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
-                const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-                const fecha = new Date(partes[0], partes[1]-1, partes[2]);
-                return `${dias[fecha.getDay()]} ${parseInt(partes[2])} ${meses[fecha.getMonth()]} ${partes[0]}`;
+                return `${partes[2]}/${partes[1]}/${partes[0]}`;
             }
             return fechaStr;
+        }
+        
+        function formatearFechaParaInforme(fechaStr) {
+            if (!fechaStr) return '---';
+            const partes = fechaStr.split('-');
+            if (partes.length === 3) {
+                const meses = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+                return `${partes[2]} ${meses[parseInt(partes[1])-1]} ${partes[0]}`;
+            }
+            return fechaStr;
+        }
+        
+        function getNumeroReporte() {
+            const fechasUnicas = [...new Set(registros.map(r => r.fecha))].sort();
+            const hoy = getFechaHoy();
+            const index = fechasUnicas.indexOf(hoy);
+            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
         }
         
         async function cargarDatosDesdeNube() {
@@ -395,7 +405,6 @@
                 registros = Array.isArray(datos) ? datos : [];
                 console.log(`✅ Cargados ${registros.length} registros`);
                 actualizarPaneles();
-                actualizarGrafica();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
             } catch(e) {
@@ -415,22 +424,6 @@
                 await cargarDatosDesdeNube();
                 return true;
             } catch(e) { return false; }
-        }
-        
-        async function actualizarEnNube(index, registroActualizado) {
-            // Para editar, eliminamos el antiguo y creamos uno nuevo
-            const exito = await guardarEnNube(registroActualizado);
-            if (exito) {
-                await eliminarRegistroDeNube(index);
-            }
-            return exito;
-        }
-        
-        async function eliminarRegistroDeNube(index) {
-            // Como no podemos eliminar directamente del Sheet por POST,
-            // recargamos los datos y el registro ya no está en el array local
-            await cargarDatosDesdeNube();
-            return true;
         }
         
         function obtenerUnidades() {
@@ -461,12 +454,12 @@
         function actualizarRegistrosPorFecha() {
             if (!fechaSeleccionada) return;
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
-            document.getElementById('fechaSeleccionadaLabel').innerText = formatearFecha(fechaSeleccionada);
+            document.getElementById('fechaSeleccionadaLabel').innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="7">⚠️ Sin registros en esta fecha</td></tr>';
             else tbody.innerHTML = filtrados.map((r, idx) => `
                 <tr>
-                    <td>${r.hora || '---'}</td>
+                    <td>${r.hora || '00:00:00'}</td>
                     <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
                     <td>${r.unidad || 'N/A'}</td>
                     <td>${r.libro || 'N/A'}</td>
@@ -510,7 +503,6 @@
                 observaciones: nuevasObs || 'Ninguna'
             };
             
-            // Eliminar el antiguo y guardar el nuevo
             registros.splice(index, 1);
             await guardarEnNube(registroEditado);
             alert('✅ Registro actualizado');
@@ -518,7 +510,11 @@
         
         function actualizarPaneles() {
             actualizarSelectUnidad();
+            
+            const hoy = getFechaHoy();
+            const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + (r.cedulas || 0), 0);
             let totalCedulas = 0, acumulado = {}, analistasPorUnidad = {}, analistasSet = new Set();
+            
             registros.forEach(r => {
                 totalCedulas += (r.cedulas || 0);
                 acumulado[r.unidad] = (acumulado[r.unidad] || 0) + (r.cedulas || 0);
@@ -526,6 +522,8 @@
                 if (r.cedulaAnalista) analistasPorUnidad[r.unidad].add(r.cedulaAnalista);
                 if (r.cedulaAnalista) analistasSet.add(r.cedulaAnalista);
             });
+            
+            document.getElementById('totalHoy').innerText = totalHoy;
             document.getElementById('totalRegistros').innerText = registros.length;
             document.getElementById('totalAcumulado').innerText = totalCedulas;
             document.getElementById('totalAnalistas').innerText = analistasSet.size;
@@ -538,8 +536,8 @@
                 else tbodyTodos.innerHTML = ordenados.map((r, i) => `
                     <tr>
                         <td>${i+1}</td>
-                        <td><strong>${formatearFecha(r.fecha)}</strong></td>
-                        <td>${r.hora || '---'}</td>
+                        <td><strong>${formatearFechaDDMMAAAA(r.fecha)}</strong></td>
+                        <td>${r.hora || '00:00:00'}</td>
                         <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
                         <td>${r.unidad || 'N/A'}</td>
                         <td>${r.libro || 'N/A'}</td>
@@ -562,75 +560,6 @@
                 `).join('');
             }
             if (fechaSeleccionada) actualizarRegistrosPorFecha();
-        }
-        
-        function actualizarGrafica() {
-            const canvas = document.getElementById('graficaAvance');
-            if (!canvas) return;
-            
-            const porDia = {};
-            registros.forEach(r => {
-                const fecha = r.fecha;
-                if (!porDia[fecha]) porDia[fecha] = 0;
-                porDia[fecha] += (r.cedulas || 0);
-            });
-            
-            const fechasOrdenadas = Object.keys(porDia).sort();
-            const datosDiarios = fechasOrdenadas.map(f => porDia[f]);
-            let acumulado = 0;
-            const datosAcumulados = datosDiarios.map(val => { acumulado += val; return acumulado; });
-            const etiquetas = fechasOrdenadas.map(f => formatearFecha(f));
-            
-            if (miGrafica) miGrafica.destroy();
-            
-            if (fechasOrdenadas.length === 0) {
-                canvas.style.display = 'none';
-                canvas.parentElement.innerHTML = '<div style="text-align:center;padding:40px;">📊 No hay datos para mostrar aún</div>';
-                return;
-            }
-            
-            canvas.style.display = 'block';
-            miGrafica = new Chart(canvas, {
-                type: 'bar',
-                data: {
-                    labels: etiquetas,
-                    datasets: [
-                        {
-                            label: 'Cédulas por día',
-                            type: 'bar',
-                            data: datosDiarios,
-                            backgroundColor: 'rgba(54, 162, 235, 0.7)',
-                            borderColor: 'rgba(54, 162, 235, 1)',
-                            borderWidth: 1,
-                            borderRadius: 6,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Cédulas acumuladas',
-                            type: 'line',
-                            data: datosAcumulados,
-                            borderColor: 'rgba(255, 152, 0, 1)',
-                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                            borderWidth: 3,
-                            fill: true,
-                            tension: 0.3,
-                            pointRadius: 4,
-                            pointBackgroundColor: 'rgba(255, 152, 0, 1)',
-                            yAxisID: 'y'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'top', labels: { font: { size: 11 } } },
-                        tooltip: { callbacks: { label: function(context) { return `${context.dataset.label}: ${context.raw.toLocaleString()}`; } } }
-                    },
-                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Cédulas', font: { size: 11 } }, ticks: { callback: function(v) { return v.toLocaleString(); } } } }
-                }
-            });
         }
         
         function mostrarAnalista() {
@@ -679,7 +608,7 @@
         
         function generarInforme() {
             const ahora = new Date();
-            const fechaCorta = `${ahora.getDate().toString().padStart(2,'0')} ${['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'][ahora.getMonth()]} ${ahora.getFullYear()}`;
+            const fechaCorta = formatearFechaParaInforme(getFechaHoy());
             const hoy = getFechaHoy();
             const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + (r.cedulas || 0), 0);
             let totalAcum = 0;
@@ -690,14 +619,26 @@
                 if (r.cedulaAnalista) analistas.add(r.cedulaAnalista);
                 detalle[r.unidad] = (detalle[r.unidad] || 0) + (r.cedulas || 0);
             });
+            
+            const numeroReporte = getNumeroReporte();
+            
             const win = window.open();
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe</title><style>
+            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe Digitalización</title><style>
                 body{font-family:system-ui;background:#f0f2f5;padding:16px}.informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px}.header{text-align:center}.fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}.resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin:20px 0}.numero-grande{font-size:34px;font-weight:800;color:#ff9800}.indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap}.indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}.indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}th{background:#1e3c72;color:white;padding:12px}td{padding:10px;border-bottom:1px solid #eee}</style></head><body>
-                <div class="informe"><div class="header"><h1>📊 INFORME PERIÓDICO DEL AVANCE</h1><h2>Jornada de Digitalización - Reserva Militar</h2><div class="fecha-informe">📅 ${fechaCorta}</div></div>
-                <div class="resumen"><p>🔹 <strong>RESUMEN EJECUTIVO</strong></p><p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en total, siendo hoy <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p></div>
-                <div class="indicadores"><div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div><div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div><div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div>DÍAS</div></div><div class="indicador"><div class="indicador-valor">${registros.length}</div><div>REPORTES</div></div></div>
-                <h4>📋 Detalle por Unidad</h4> <table><thead><tr><th>Unidad</th><th>Total</th></tr></thead><tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody></table>
-                <div class="footer"><p>${new Date().toLocaleString()}</p></div></div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
+                <div class="informe"><div class="header"><h1>📊 INFORME PERIÓDICO DEL AVANCE</h1><h2>Jornada de Digitalización de la Reserva Militar</h2><div class="fecha-informe">📅 ${fechaCorta}</div></div>
+                <div class="resumen"><p>🔹 <strong>RESUMEN EJECUTIVO</strong></p><p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en total, de las cuales hoy fueron <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p></div>
+                <div class="indicadores">
+                    <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
+                    <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
+                    <div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div>DÍAS TRABAJADOS</div></div>
+                    <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
+                </div>
+                <h4>📋 Detalle por Unidad</h4>
+                <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
+                </table>
+                <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div></div>
+                <script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
             win.document.close();
         }
         
