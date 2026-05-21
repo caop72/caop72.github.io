@@ -337,7 +337,7 @@
                         <h4>📈 ACUMULADO POR UNIDAD</h4>
                         <div class="tabla-container">
                             <table id="tablaAcumulado">
-                                <thead></tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
+                                <thead><tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
                                 <tbody id="tbodyAcumulado"></tbody>
                             </table>
                         </div>
@@ -351,7 +351,7 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwFCNp0P56sS8v9J6XfRBn8F3rBnyMCBaQ3VWvXCDmnaOXZf-OsjLzs16yuDEJdlYeE/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbFd2GOgv4nSAt_TqoNjQojPgy97JZF_jnUTBiAPJ2vpAD3HG0IN1mk84dothH49b9/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -383,7 +383,6 @@
         
         function formatearFechaDDMMAAAA(fechaStr) {
             if (!fechaStr) return '---';
-            if (fechaStr.includes('/')) return fechaStr;
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
                 return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -414,9 +413,8 @@
                 if (loadingDiv) loadingDiv.style.display = 'block';
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
-                // Filtrar registros con formato válido
-                registros = Array.isArray(datos) ? datos.filter(r => r.fecha && r.fecha.includes('-') && !r.fecha.includes('T')) : [];
-                console.log("Registros válidos cargados:", registros.length);
+                registros = Array.isArray(datos) ? datos : [];
+                console.log("Registros cargados:", registros.length);
                 actualizarPaneles();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -475,7 +473,7 @@
             if (label) label.innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
+                tbody.innerHTML = '<td><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
             } else {
                 tbody.innerHTML = filtrados.map((r, idx) => `
                     <tr>
@@ -584,7 +582,7 @@
             if (tbodyAcum) {
                 const unidades = Object.keys(acumulado).sort();
                 if (unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
+                    tbodyAcum.innerHTML = '<td><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
                 } else {
                     tbodyAcum.innerHTML = unidades.map(u => `
                         <tr>
@@ -658,22 +656,52 @@
             const numeroReporte = getNumeroReporte();
             
             const win = window.open();
-            win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Informe Digitalización</title><style>
-                body{font-family:system-ui;background:#f0f2f5;padding:16px}.informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px}.header{text-align:center}.fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}.resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin:20px 0}.numero-grande{font-size:34px;font-weight:800;color:#ff9800}.indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap}.indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}.indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}th{background:#1e3c72;color:white;padding:12px}td{padding:10px;border-bottom:1px solid #eee}</style></head><body>
-                <div class="informe"><div class="header"><h1>📊 INFORME PERIÓDICO DEL AVANCE</h1><h2>Jornada de Digitalización de la Reserva Militar</h2><div class="fecha-informe">📅 ${fechaCorta}</div></div>
-                <div class="resumen"><p>🔹 <strong>RESUMEN EJECUTIVO</strong></p><p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en total, de las cuales hoy fueron <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p></div>
-                <div class="indicadores">
-                    <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
-                    <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
-                    <div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div>DÍAS TRABAJADOS</div></div>
-                    <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
+            win.document.write(`<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>Informe Digitalización</title>
+                <style>
+                    body{font-family:system-ui;background:#f0f2f5;padding:16px;margin:0}
+                    .informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px}
+                    .header{text-align:center}
+                    .fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}
+                    .resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin:20px 0}
+                    .numero-grande{font-size:34px;font-weight:800;color:#ff9800}
+                    .indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap}
+                    .indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}
+                    .indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}
+                    th{background:#1e3c72;color:white;padding:12px}
+                    td{padding:10px;border-bottom:1px solid #eee}
+                </style>
+            </head>
+            <body>
+                <div class="informe">
+                    <div class="header">
+                        <h1>📊 INFORME PERIÓDICO DEL AVANCE</h1>
+                        <h2>Jornada de Digitalización de la Reserva Militar</h2>
+                        <div class="fecha-informe">📅 ${fechaCorta}</div>
+                    </div>
+                    <div class="resumen">
+                        <p>🔹 <strong>RESUMEN EJECUTIVO</strong></p>
+                        <p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en total, de las cuales hoy fueron <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p>
+                    </div>
+                    <div class="indicadores">
+                        <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
+                        <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${new Set(registros.map(r=>r.fecha)).size}</div><div>DÍAS TRABAJADOS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
+                    </div>
+                    <h4>📋 Detalle por Unidad</h4>
+                    <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                    <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
+                    </table>
+                    <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div>
                 </div>
-                <h4>📋 Detalle por Unidad</h4>
-                <table style="width:100%"><thead><tr><th>Unidad</th><th>Total Cédulas</th></td></thead>
-                <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
-                </table>
-                <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div></div>
-                <script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
+                <script>setTimeout(()=>window.print(),500);<\/script>
+            </body>
+            </html>`);
             win.document.close();
         }
         
@@ -706,7 +734,6 @@
             const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             const hora = getHoraLocal();
             
-            // Validar cédulas (solo números positivos)
             if (isNaN(cedulas) || cedulas <= 0) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Las cédulas deben ser un número positivo mayor a cero</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
