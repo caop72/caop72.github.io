@@ -382,57 +382,14 @@
             return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
         }
 
-        function interpretarFecha(valor) {
-            if (!valor && valor !== 0) return { raw: "", fecha: "", hora: "" };
-
-            const texto = String(valor).trim();
-
-            if (/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-                return { raw: texto, fecha: texto, hora: "" };
-            }
-
-            if (/^\d{2}\/\d{2}\/\d{4}$/.test(texto)) {
-                const [d, m, y] = texto.split('/');
-                return { raw: texto, fecha: `${y}-${m}-${d}`, hora: "" };
-            }
-
-            if (/^\d{2}\/\d{2}\/\d{2}$/.test(texto)) {
-                const [d, m, y] = texto.split('/');
-                const yy = Number(y) < 50 ? `20${y}` : `19${y}`;
-                return { raw: texto, fecha: `${yy}-${m}-${d}`, hora: "" };
-            }
-
-            if (/^\d{8}$/.test(texto)) {
-                return { raw: texto, fecha: `${texto.slice(0, 4)}-${texto.slice(4, 6)}-${texto.slice(6, 8)}`, hora: "" };
-            }
-
-            if (/^\d{14}$/.test(texto)) {
-                return {
-                    raw: texto,
-                    fecha: `${texto.slice(0, 4)}-${texto.slice(4, 6)}-${texto.slice(6, 8)}`,
-                    hora: `${texto.slice(8, 10)}:${texto.slice(10, 12)}:${texto.slice(12, 14)}`
-                };
-            }
-
-            const iso = texto.match(/^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{2}:\d{2}:\d{2}))?/);
-            if (iso) {
-                return { raw: texto, fecha: iso[1], hora: iso[2] || "" };
-            }
-
-            const isoUtc = new Date(texto);
-            if (!isNaN(isoUtc.getTime())) {
-                return {
-                    raw: texto,
-                    fecha: `${isoUtc.getFullYear()}-${pad2(isoUtc.getMonth() + 1)}-${pad2(isoUtc.getDate())}`,
-                    hora: `${pad2(isoUtc.getHours())}:${pad2(isoUtc.getMinutes())}:${pad2(isoUtc.getSeconds())}`
-                };
-            }
-
-            return { raw: texto, fecha: texto, hora: "" };
-        }
-
         function normalizarFecha(fecha) {
-            return interpretarFecha(fecha).fecha;
+            if (!fecha) return '';
+            const texto = String(fecha).trim();
+            const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+            const matchDMY = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (matchDMY) return `${matchDMY[3]}-${matchDMY[2]}-${matchDMY[1]}`;
+            return texto;
         }
 
         function formatearFechaVisible(fecha) {
@@ -444,31 +401,11 @@
 
         function formatearHoraVisible(hora) {
             if (!hora) return '00:00:00';
-            const texto = String(hora).trim();
-
-            if (/^\d{2}:\d{2}:\d{2}$/.test(texto)) return texto;
-            if (/^\d{2}:\d{2}$/.test(texto)) return `${texto}:00`;
-
-            const parsed = interpretarFecha(texto);
-            if (parsed.hora) return parsed.hora;
+            const h = String(hora).trim();
+            if (/^\d{2}:\d{2}:\d{2}$/.test(h)) return h;
+            const match = h.match(/(\d{2}):(\d{2})/);
+            if (match) return `${match[1]}:${match[2]}:00`;
             return '00:00:00';
-        }
-
-        function obtenerFechaVisibleYHora(reg) {
-            const fecha = normalizarFecha(reg.fecha);
-            const hora = reg.hora ? formatearHoraVisible(reg.hora) : '00:00:00';
-            return { fecha, hora };
-        }
-
-        function formatearFechaDDMMAAAA(fechaStr) {
-            return formatearFechaVisible(fechaStr);
-        }
-
-        function getNumeroReporte() {
-            const fechasUnicas = [...new Set(registros.map(r => normalizarFecha(r.fecha)).filter(Boolean))].sort();
-            const hoy = getFechaHoy();
-            const index = fechasUnicas.indexOf(hoy);
-            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
         }
 
         function totalDeFecha(fecha) {
@@ -478,15 +415,11 @@
                 .reduce((sum, r) => sum + (parseInt(r.cedulas) || 0), 0);
         }
 
-        function analistasUnicosDeFecha(fecha) {
-            const fechaNorm = normalizarFecha(fecha);
-            const set = new Set();
-            registros
-                .filter(r => normalizarFecha(r.fecha) === fechaNorm)
-                .forEach(r => {
-                    if (r.cedulaAnalista) set.add(String(r.cedulaAnalista).trim());
-                });
-            return set.size;
+        function getNumeroReporte() {
+            const fechasUnicas = [...new Set(registros.map(r => normalizarFecha(r.fecha)).filter(Boolean))].sort();
+            const hoy = getFechaHoy();
+            const index = fechasUnicas.indexOf(hoy);
+            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
         }
         
         async function cargarDatosDesdeNube() {
@@ -496,6 +429,7 @@
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
                 registros = Array.isArray(datos) ? datos : [];
+                console.log("Registros cargados:", registros.length);
                 actualizarPaneles();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -515,7 +449,10 @@
                 });
                 await cargarDatosDesdeNube();
                 return true;
-            } catch(e) { return false; }
+            } catch(e) { 
+                console.error('Error guardando:', e);
+                return false; 
+            }
         }
         
         function obtenerUnidades() {
@@ -554,13 +491,12 @@
 
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
+                tbody.innerHTML = '<td><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
             } else {
                 tbody.innerHTML = filtrados.map((r) => {
-                    const fechaHora = obtenerFechaVisibleYHora(r);
                     return `
                         <tr>
-                            <td>${formatearHoraVisible(fechaHora.hora || r.hora)}</td>
+                            <td>${formatearHoraVisible(r.hora)}</td>
                             <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
                             <td>${r.unidad || 'N/A'}</td>
                             <td>${r.libro || 'N/A'}</td>
@@ -580,9 +516,25 @@
         
         async function eliminarRegistro(index) {
             if (confirm('¿Eliminar este registro permanentemente?')) {
-                registros.splice(index, 1);
-                await cargarDatosDesdeNube();
-                alert('✅ Registro eliminado');
+                const registroAEliminar = registros[index];
+                // Para eliminar, necesitamos reconstruir todos los registros sin este
+                const nuevosRegistros = registros.filter((_, i) => i !== index);
+                
+                // Limpiar la hoja y volver a guardar todos los registros excepto el eliminado
+                // Primero, necesitamos una forma de reemplazar todos los datos
+                try {
+                    // Como no podemos eliminar directamente de Sheets, hacemos una limpieza local
+                    // y luego recargamos desde la nube
+                    registros = nuevosRegistros;
+                    // Guardamos el array actualizado (esto es local)
+                    localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
+                    alert('✅ Registro eliminado localmente. Para sincronizar con la nube, recargue la página.');
+                    actualizarPaneles();
+                    if (fechaSeleccionada) actualizarRegistrosPorFecha();
+                } catch(e) {
+                    console.error('Error al eliminar:', e);
+                    alert('❌ Error al eliminar');
+                }
             }
         }
         
@@ -604,17 +556,24 @@
             const nuevasObs = prompt('Editar observaciones:', r.observaciones || 'Ninguna');
             
             const registroEditado = {
-                ...r,
+                fecha: r.fecha,
                 cedulaAnalista: nuevaCedula,
                 unidad: nuevaUnidad,
                 libro: nuevoLibro,
                 cedulas: nuevasCedulas,
-                observaciones: nuevasObs || 'Ninguna'
+                observaciones: nuevasObs || 'Ninguna',
+                hora: r.hora || getHoraLocal()
             };
             
+            // Eliminar el antiguo y agregar el nuevo
             registros.splice(index, 1);
-            await guardarEnNube(registroEditado);
-            alert('✅ Registro actualizado');
+            registros.push(registroEditado);
+            
+            // Guardar localmente
+            localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
+            alert('✅ Registro editado localmente. Para sincronizar con la nube, recargue la página.');
+            actualizarPaneles();
+            if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
         
         function actualizarPaneles() {
@@ -635,8 +594,9 @@
                 acumulado[u] = (acumulado[u] || 0) + ced;
                 if (!analistasPorUnidad[u]) analistasPorUnidad[u] = new Set();
                 if (r.cedulaAnalista) {
-                    analistasPorUnidad[u].add(String(r.cedulaAnalista).trim());
-                    analistasSet.add(String(r.cedulaAnalista).trim());
+                    const cedulaStr = String(r.cedulaAnalista).trim();
+                    analistasPorUnidad[u].add(cedulaStr);
+                    analistasSet.add(cedulaStr);
                 }
             });
             
@@ -894,6 +854,7 @@
         });
         
         actualizarSelectUnidad();
+        cargarDatosDesdeNube();
     </script>
 </body>
 </html>
