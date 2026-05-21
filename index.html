@@ -89,16 +89,6 @@
             border-radius: 12px;
             font-size: 16px;
         }
-        input[type=number] {
-            -moz-appearance: textfield;
-            appearance: textfield;
-        }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        
         button[type="submit"] {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
@@ -113,7 +103,7 @@
         
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 12px;
             margin-bottom: 25px;
         }
@@ -278,8 +268,8 @@
                             </div>
                             <div class="form-group">
                                 <label>🆔 Cédula(s) del reservista (separadas por coma):</label>
-                                <input type="text" id="cedulaRReservista" placeholder="Ej: 12345678,87654321,11122233" required>
-                                <small style="color: #666;">Puedes escribir varias cédulas separadas por coma</small>
+                                <input type="text" id="cedulaRReservista" placeholder="Ej: 11526483, 12827266, 3233333" required>
+                                <small style="color: #666;">Puedes escribir varias cédulas separadas por coma (con o sin espacio)</small>
                             </div>
                             <button type="submit">➕ AGREGAR RESERVISTA(S) AL LOTE</button>
                         </form>
@@ -311,6 +301,7 @@
                 • Primero ingresa tus datos (cédula y unidad)<br>
                 • Si tu unidad no está en la lista, escríbela en "Nueva unidad"<br>
                 • Luego, por cada lote: escribe el libro, la unidad del reservista y las cédulas separadas por coma<br>
+                • Ejemplo de cédulas: 11526483, 12827266, 3233333<br>
                 • Las cédulas se van acumulando en el lote actual<br>
                 • Cuando termines un lote, haz clic en "CONFIRMAR Y ENVIAR LOTE"<br>
                 • Puedes cancelar un lote antes de enviarlo
@@ -459,7 +450,6 @@
         
         function obtenerUnidadesConNueva() {
             let unidades = [...UNIDADES_BASE];
-            // Agregar unidades nuevas de registros
             registrosReservistas.forEach(r => {
                 if (r.unidad_analista && !unidades.includes(r.unidad_analista)) {
                     unidades.push(r.unidad_analista);
@@ -487,7 +477,6 @@
                 select.value = valorActual;
             }
             
-            // Manejar campo de nueva unidad
             const campoNueva = document.getElementById('campoNuevaUnidadPrincipal');
             if (campoNueva) {
                 if (select.value === "OTRA_UNIDAD") {
@@ -524,7 +513,7 @@
             if (tbody) {
                 const ordenados = [...registrosReservistas].reverse();
                 if (ordenados.length === 0) {
-                    tbody.innerHTML = '<td><td colspan="9" style="text-align:center">⚠️ No hay reservistas registrados</div></div></td>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay reservistas registrados</div></div></td>';
                 } else {
                     tbody.innerHTML = ordenados.map((r, i) => `
                         <tr>
@@ -702,7 +691,7 @@
             actualizarResumenLote();
         });
         
-        // AGREGAR RESERVISTA(S) AL LOTE (soporta múltiples cédulas separadas por coma)
+        // AGREGAR RESERVISTA(S) AL LOTE - CORREGIDO (acepta espacios después de coma)
         document.getElementById('formReservista').addEventListener('submit', function(e) {
             e.preventDefault();
             const libro = document.getElementById('libroReservista').value.trim();
@@ -721,16 +710,24 @@
                 return;
             }
             
-            // Separar cédulas por coma
+            // Separar cédulas por coma (ignorando espacios)
             const cedulasArray = cedulasTexto.split(',').map(c => c.trim()).filter(c => c !== '');
+            
+            if (cedulasArray.length === 0) {
+                document.getElementById('mensajeReservista').innerHTML = '<div class="mensaje-error">❌ No se detectaron cédulas válidas</div>';
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 3000);
+                return;
+            }
+            
             const desde = (parseInt(libro) - 2).toString();
             
             let agregadas = 0;
+            let errores = [];
+            
             for (const cedula_r of cedulasArray) {
                 if (!/^\d+$/.test(cedula_r)) {
-                    document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-error">❌ La cédula "${cedula_r}" no es válida</div>`;
-                    setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 3000);
-                    return;
+                    errores.push(cedula_r);
+                    continue;
                 }
                 
                 loteActual.push({
@@ -745,13 +742,18 @@
                 agregadas++;
             }
             
-            document.getElementById('libroReservista').value = '';
-            document.getElementById('unidadRReservista').value = '';
-            document.getElementById('cedulaRReservista').value = '';
-            
-            actualizarResumenLote();
-            document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-exito">✅ ${agregadas} reservista(s) agregado(s) al lote</div>`;
-            setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
+            if (errores.length > 0) {
+                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-error">⚠️ Las siguientes cédulas no son válidas: ${errores.join(', ')}</div>`;
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 4000);
+            } else {
+                document.getElementById('libroReservista').value = '';
+                document.getElementById('unidadRReservista').value = '';
+                document.getElementById('cedulaRReservista').value = '';
+                
+                actualizarResumenLote();
+                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-exito">✅ ${agregadas} reservista(s) agregado(s) al lote</div>`;
+                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
+            }
         });
         
         // CONFIRMAR Y ENVIAR LOTE
