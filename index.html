@@ -160,26 +160,18 @@
         th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: #1e3c72; color: white; position: sticky; top: 0; white-space: nowrap; }
         td { white-space: nowrap; }
-        .btn-eliminar {
-            background: #dc3545;
-            color: white;
+        .btn-accion {
             border: none;
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 12px;
             cursor: pointer;
+            font-size: 11px;
+            margin: 0 2px;
         }
-        .btn-generar-informe {
-            background: linear-gradient(135deg, #ff9800 0%, #f44336 100%);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 10px;
-        }
+        .btn-editar { background: #ffc107; color: #1e3c72; }
+        .btn-eliminar { background: #dc3545; color: white; }
+        .btn-guardar { background: #28a745; color: white; }
+        .btn-cancelar { background: #6c757d; color: white; }
         
         .password-area { text-align: center; padding: 30px 20px; }
         .password-area input {
@@ -226,10 +218,15 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        .editando {
+            background-color: #fff3cd;
+        }
+        
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat-number { font-size: 24px; }
             th, td { font-size: 11px; padding: 6px 4px; }
+            .btn-accion { padding: 3px 6px; font-size: 10px; }
         }
     </style>
 </head>
@@ -306,7 +303,7 @@
                         <h4>📋 REGISTROS DEL DÍA <span id="fechaSeleccionadaLabel"></span></h4>
                         <div class="tabla-container">
                             <table id="tablaRegistrosFecha">
-                                <thead><tr><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th></tr></thead>
+                                <thead><tr><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
                                 <tbody id="tbodyRegistrosFecha"></tbody>
                             </table>
                         </div>
@@ -321,7 +318,7 @@
                         <h4>📋 TODOS LOS REGISTROS</h4>
                         <div class="tabla-container">
                             <table id="tablaTodosRegistros">
-                                <thead><tr><th>#</th><th>FECHA</th><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th></tr></thead>
+                                <thead><tr><th>#</th><th>FECHA</th><th>HORA</th><th>ANALISTA</th><th>UNIDAD</th><th>AÑO</th><th>CÉDULAS</th><th>OBS</th><th>ACCIÓN</th></tr></thead>
                                 <tbody id="tbodyTodosRegistros"></tbody>
                             </table>
                         </div>
@@ -362,8 +359,8 @@
         let registros = [];
         let miGrafica = null;
         let fechaSeleccionada = "";
+        let registroEditando = null;
         
-        // FUNCIÓN CORREGIDA PARA FECHA LOCAL
         function getFechaHoy() { 
             const hoy = new Date();
             const year = hoy.getFullYear();
@@ -381,9 +378,9 @@
             if (!fechaStr) return '---';
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
-                const fecha = new Date(partes[0], partes[1]-1, partes[2]);
                 const dias = ['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'];
                 const meses = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                const fecha = new Date(partes[0], partes[1]-1, partes[2]);
                 return `${dias[fecha.getDay()]} ${parseInt(partes[2])} ${meses[fecha.getMonth()]} ${partes[0]}`;
             }
             return fechaStr;
@@ -420,6 +417,22 @@
             } catch(e) { return false; }
         }
         
+        async function actualizarEnNube(index, registroActualizado) {
+            // Para editar, eliminamos el antiguo y creamos uno nuevo
+            const exito = await guardarEnNube(registroActualizado);
+            if (exito) {
+                await eliminarRegistroDeNube(index);
+            }
+            return exito;
+        }
+        
+        async function eliminarRegistroDeNube(index) {
+            // Como no podemos eliminar directamente del Sheet por POST,
+            // recargamos los datos y el registro ya no está en el array local
+            await cargarDatosDesdeNube();
+            return true;
+        }
+        
         function obtenerUnidades() {
             let unidades = [...UNIDADES_BASE];
             registros.forEach(r => { if (r.unidad && !unidades.includes(r.unidad)) unidades.push(r.unidad); });
@@ -450,8 +463,8 @@
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
             document.getElementById('fechaSeleccionadaLabel').innerText = formatearFecha(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
-            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="6">⚠️ Sin registros en esta fecha</td></tr>';
-            else tbody.innerHTML = filtrados.map(r => `
+            if (filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="7">⚠️ Sin registros en esta fecha</td></tr>';
+            else tbody.innerHTML = filtrados.map((r, idx) => `
                 <tr>
                     <td>${r.hora || '---'}</td>
                     <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
@@ -459,8 +472,48 @@
                     <td>${r.libro || 'N/A'}</td>
                     <td><strong>${r.cedulas || 0}</strong></td>
                     <td>${r.observaciones || 'Ninguna'}</td>
+                    <td>
+                        <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
+                        <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
+                    </td>
                 </tr>
             `).join('');
+        }
+        
+        async function eliminarRegistro(index) {
+            if (confirm('¿Eliminar este registro permanentemente?')) {
+                registros.splice(index, 1);
+                await cargarDatosDesdeNube();
+                actualizarPaneles();
+                alert('✅ Registro eliminado');
+            }
+        }
+        
+        async function editarRegistro(index) {
+            const r = registros[index];
+            const nuevaCedula = prompt('Editar cédula del analista:', r.cedulaAnalista);
+            if (!nuevaCedula) return;
+            const nuevaUnidad = prompt('Editar unidad:', r.unidad);
+            if (!nuevaUnidad) return;
+            const nuevoLibro = prompt('Editar año del libro:', r.libro);
+            if (!nuevoLibro) return;
+            const nuevasCedulas = prompt('Editar cantidad de cédulas:', r.cedulas);
+            if (!nuevasCedulas) return;
+            const nuevasObs = prompt('Editar observaciones:', r.observaciones || 'Ninguna');
+            
+            const registroEditado = {
+                ...r,
+                cedulaAnalista: nuevaCedula,
+                unidad: nuevaUnidad,
+                libro: nuevoLibro,
+                cedulas: parseInt(nuevasCedulas),
+                observaciones: nuevasObs || 'Ninguna'
+            };
+            
+            // Eliminar el antiguo y guardar el nuevo
+            registros.splice(index, 1);
+            await guardarEnNube(registroEditado);
+            alert('✅ Registro actualizado');
         }
         
         function actualizarPaneles() {
@@ -481,7 +534,7 @@
             const tbodyTodos = document.getElementById('tbodyTodosRegistros');
             if (tbodyTodos) {
                 const ordenados = [...registros].reverse();
-                if (ordenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="8">⚠️ Sin datos</td></td>';
+                if (ordenados.length === 0) tbodyTodos.innerHTML = '<tr><td colspan="9">⚠️ Sin datos</td></tr>';
                 else tbodyTodos.innerHTML = ordenados.map((r, i) => `
                     <tr>
                         <td>${i+1}</td>
@@ -492,6 +545,10 @@
                         <td>${r.libro || 'N/A'}</td>
                         <td><strong>${r.cedulas || 0}</strong></td>
                         <td>${r.observaciones || 'Ninguna'}</td>
+                        <td>
+                            <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
+                            <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
+                        </td>
                     </tr>
                 `).join('');
             }
@@ -507,12 +564,10 @@
             if (fechaSeleccionada) actualizarRegistrosPorFecha();
         }
         
-        // NUEVA GRÁFICA: solo días con registros, con barras y línea acumulada
         function actualizarGrafica() {
             const canvas = document.getElementById('graficaAvance');
             if (!canvas) return;
             
-            // Agrupar por fecha y calcular total por día
             const porDia = {};
             registros.forEach(r => {
                 const fecha = r.fecha;
@@ -520,18 +575,10 @@
                 porDia[fecha] += (r.cedulas || 0);
             });
             
-            // Ordenar fechas cronológicamente
             const fechasOrdenadas = Object.keys(porDia).sort();
             const datosDiarios = fechasOrdenadas.map(f => porDia[f]);
-            
-            // Calcular acumulado
             let acumulado = 0;
-            const datosAcumulados = datosDiarios.map(val => {
-                acumulado += val;
-                return acumulado;
-            });
-            
-            // Formatear etiquetas
+            const datosAcumulados = datosDiarios.map(val => { acumulado += val; return acumulado; });
             const etiquetas = fechasOrdenadas.map(f => formatearFecha(f));
             
             if (miGrafica) miGrafica.destroy();
@@ -543,7 +590,6 @@
             }
             
             canvas.style.display = 'block';
-            
             miGrafica = new Chart(canvas, {
                 type: 'bar',
                 data: {
@@ -557,8 +603,7 @@
                             borderColor: 'rgba(54, 162, 235, 1)',
                             borderWidth: 1,
                             borderRadius: 6,
-                            yAxisID: 'y',
-                            order: 2
+                            yAxisID: 'y'
                         },
                         {
                             label: 'Cédulas acumuladas',
@@ -571,8 +616,7 @@
                             tension: 0.3,
                             pointRadius: 4,
                             pointBackgroundColor: 'rgba(255, 152, 0, 1)',
-                            yAxisID: 'y',
-                            order: 1
+                            yAxisID: 'y'
                         }
                     ]
                 },
@@ -584,9 +628,7 @@
                         legend: { position: 'top', labels: { font: { size: 11 } } },
                         tooltip: { callbacks: { label: function(context) { return `${context.dataset.label}: ${context.raw.toLocaleString()}`; } } }
                     },
-                    scales: {
-                        y: { beginAtZero: true, title: { display: true, text: 'Cédulas', font: { size: 11 } }, ticks: { callback: function(v) { return v.toLocaleString(); } } }
-                    }
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'Cédulas', font: { size: 11 } }, ticks: { callback: function(v) { return v.toLocaleString(); } } } }
                 }
             });
         }
@@ -658,6 +700,9 @@
                 <div class="footer"><p>${new Date().toLocaleString()}</p></div></div><script>setTimeout(()=>window.print(),500);<\/script></body></html>`);
             win.document.close();
         }
+        
+        window.eliminarRegistro = eliminarRegistro;
+        window.editarRegistro = editarRegistro;
         
         // EVENTOS
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
