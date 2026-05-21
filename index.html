@@ -89,6 +89,14 @@
             border-radius: 12px;
             font-size: 16px;
         }
+        /* Quitar flechas de number input */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+        
         button[type="submit"] {
             background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
             color: white;
@@ -244,7 +252,11 @@
                     <div class="form-group"><label>🏢 Unidad:</label><select id="unidadAnalista" required><option value="">-- Seleccione --</option></select></div>
                     <div class="form-group campo-nueva-unidad" id="campoNuevaUnidad"><label>✏️ Nueva unidad:</label><input type="text" id="nuevaUnidadTexto" placeholder="Ej: 100 BRIGADA"></div>
                     <div class="form-group"><label>📖 Año del Libro:</label><input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required></div>
-                    <div class="form-group"><label>🔢 Cédulas HOY:</label><input type="number" id="cedulasAnalista" placeholder="Cantidad" required></div>
+                    <div class="form-group"><label>🔢 Cédulas HOY:</label>
+                        <input type="number" id="cedulasAnalista" placeholder="Cantidad" min="1" step="1" required
+                               onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault()"
+                               oninput="if(this.value < 0) this.value = 0">
+                    </div>
                     <div class="form-group"><label>📝 Observaciones:</label><input type="text" id="observacionesAnalista" placeholder="Ninguna"></div>
                     <button type="submit">✅ ENVIAR REGISTRO</button>
                 </form>
@@ -370,9 +382,7 @@
         
         function formatearFechaDDMMAAAA(fechaStr) {
             if (!fechaStr) return '---';
-            // Si ya viene en formato DD/MM/AAAA, devolver igual
             if (fechaStr.includes('/')) return fechaStr;
-            // Si viene en formato YYYY-MM-DD
             const partes = fechaStr.split('-');
             if (partes.length === 3) {
                 return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -404,8 +414,7 @@
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
                 registros = Array.isArray(datos) ? datos : [];
-                console.log("Registros cargados:", registros);
-                console.log("Fechas en registros:", registros.map(r => r.fecha));
+                console.log("Registros cargados:", registros.length);
                 actualizarPaneles();
                 if (fechaSeleccionada) actualizarRegistrosPorFecha();
                 if (loadingDiv) loadingDiv.style.display = 'none';
@@ -459,10 +468,9 @@
         
         function actualizarRegistrosPorFecha() {
             if (!fechaSeleccionada) return;
-            console.log("Filtrando por fecha:", fechaSeleccionada);
             const filtrados = registros.filter(r => r.fecha === fechaSeleccionada);
-            console.log("Registros filtrados:", filtrados.length);
-            document.getElementById('fechaSeleccionadaLabel').innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
+            const label = document.getElementById('fechaSeleccionadaLabel');
+            if (label) label.innerText = formatearFechaDDMMAAAA(fechaSeleccionada);
             const tbody = document.getElementById('tbodyRegistrosFecha');
             if (filtrados.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" style="text-align:center">⚠️ Sin registros en esta fecha</td></tr>';
@@ -523,8 +531,6 @@
             actualizarSelectUnidad();
             
             const hoy = getFechaHoy();
-            console.log("Fecha actual (hoy):", hoy);
-            
             const totalHoy = registros.filter(r => r.fecha === hoy).reduce((s, r) => s + (r.cedulas || 0), 0);
             let totalCedulas = 0, acumulado = {}, analistasPorUnidad = {}, analistasSet = new Set();
             
@@ -535,8 +541,6 @@
                 if (r.cedulaAnalista) analistasPorUnidad[r.unidad].add(r.cedulaAnalista);
                 if (r.cedulaAnalista) analistasSet.add(r.cedulaAnalista);
             });
-            
-            console.log("Total cédulas hoy:", totalHoy);
             
             document.getElementById('totalHoy').innerText = totalHoy;
             document.getElementById('totalRegistros').innerText = registros.length;
@@ -690,23 +694,52 @@
             const cedula = document.getElementById('cedulaAnalista').value.trim();
             let unidad = document.getElementById('unidadAnalista').value;
             const nuevaUnidad = document.getElementById('nuevaUnidadTexto').value.trim().toUpperCase();
+            let cedulas = parseInt(document.getElementById('cedulasAnalista').value);
             const libro = document.getElementById('libroAnalista').value.trim();
-            const cedulas = parseInt(document.getElementById('cedulasAnalista').value);
             const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
             const hora = getHoraLocal();
+            
+            // Validar que cédulas sea un número positivo
+            if (isNaN(cedulas) || cedulas <= 0) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Las cédulas deben ser un número positivo mayor a cero</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
+                return;
+            }
             
             if (libro && !/^\d{4}$/.test(libro)) {
                 document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
                 setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
                 return;
             }
+            
             let unidadFinal = "";
             if (unidad === "OTRA_UNIDAD") {
-                if (!nuevaUnidad) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
+                if (!nuevaUnidad) { 
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>'; 
+                    setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                    return; 
+                }
                 unidadFinal = nuevaUnidad;
-            } else { unidadFinal = unidad; if (!unidadFinal) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; } }
-            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
-            if (!/^\d+$/.test(cedula)) { document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>'; setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); return; }
+            } else { 
+                unidadFinal = unidad; 
+                if (!unidadFinal) { 
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>'; 
+                    setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                    return; 
+                } 
+            }
+            
+            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) { 
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>'; 
+                setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                return; 
+            }
+            
+            if (!/^\d+$/.test(cedula)) { 
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>'; 
+                setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                return; 
+            }
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
             const exito = await guardarEnNube({ fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora });
