@@ -31,6 +31,10 @@
         .stat-card-azul { background: linear-gradient(135deg, #2196F3 0%, #0b5e9e 100%); }
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
+        .filtro-unidad { background: #f8f9fa; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .filtro-unidad label { font-weight: 600; color: #1e3c72; }
+        .filtro-unidad select { flex: 1; min-width: 200px; }
+        .filtro-unidad button { background: #1e3c72; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
         .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
@@ -185,6 +189,16 @@
                         </div>
                     </div>
 
+                    <!-- NUEVO SELECTOR DE UNIDAD -->
+                    <div class="filtro-unidad">
+                        <label>🏢 Filtrar por unidad del analista:</label>
+                        <select id="filtroUnidadAnalista">
+                            <option value="TODAS">-- TODAS LAS UNIDADES --</option>
+                        </select>
+                        <button id="btnFiltrarUnidad">🔍 APLICAR FILTRO</button>
+                        <button id="btnLimpiarFiltro" style="background: #6c757d;">🗑️ LIMPIAR FILTRO</button>
+                    </div>
+
                     <div class="seccion-tabla">
                         <h4>📋 BASE DE DATOS DE RESERVISTAS</h4>
                         <div class="tabla-container">
@@ -206,6 +220,26 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- RESUMEN POR UNIDAD SELECCIONADA -->
+                    <div id="resumenUnidad" style="background: #e3f2fd; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: none;">
+                        <h4>📊 RESUMEN DE LA UNIDAD <span id="nombreUnidadSeleccionada"></span></h4>
+                        <div class="stats-grid" style="margin-bottom: 0;">
+                            <div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                                <div class="stat-number" id="resumenTotalReservistas">0</div>
+                                <div class="stat-label">TOTAL RESERVISTAS</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #0b5e9e 100%);">
+                                <div class="stat-number" id="resumenTotalLibros">0</div>
+                                <div class="stat-label">LIBROS DIFERENTES</div>
+                            </div>
+                            <div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
+                                <div class="stat-number" id="resumenTotalAnalistasUnidad">0</div>
+                                <div class="stat-label">ANALISTAS</div>
+                            </div>
+                        </div>
+                    </div>
+
                     <button id="btnGenerarInforme" style="background: #ff9800; color: white; padding: 14px; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px;">📄 GENERAR INFORME</button>
                 </div>
             </div>
@@ -231,8 +265,10 @@
         let registrosReservistas = [];
         let loteActual = [];
         let datosAnalista = { cedula: "", unidad: "" };
+        let unidadFiltroActual = "TODAS";
         
         function pad2(n) { return String(n).padStart(2, '0'); }
+        
         function getFechaHoy() {
             const d = new Date();
             return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
@@ -251,6 +287,7 @@
                 const respuesta = await fetch(SCRIPT_URL);
                 const datos = await respuesta.json();
                 registrosReservistas = Array.isArray(datos.reservistas) ? datos.reservistas : [];
+                actualizarSelectFiltroUnidad();
                 actualizarPanelOperador();
                 if (loadingDiv) loadingDiv.style.display = 'none';
             } catch(e) {
@@ -307,53 +344,89 @@
             }
         }
         
-        function obtenerUnidadesConNueva() {
-            let unidades = [...UNIDADES_BASE];
+        function obtenerUnidadesAnalistas() {
+            const unidades = new Set();
             registrosReservistas.forEach(r => {
-                if (r.unidad_analista && !unidades.includes(r.unidad_analista)) {
-                    unidades.push(r.unidad_analista);
-                }
+                if (r.unidad_analista) unidades.add(r.unidad_analista);
             });
-            return unidades.sort();
+            return Array.from(unidades).sort();
         }
         
-        function actualizarSelectUnidad(selectId, incluirOtra = true) {
-            const select = document.getElementById(selectId);
+        function actualizarSelectFiltroUnidad() {
+            const select = document.getElementById('filtroUnidadAnalista');
             if (!select) return;
-            const unidades = obtenerUnidadesConNueva();
-            select.innerHTML = '<option value="">-- Seleccione --</option>';
+            const unidades = obtenerUnidadesAnalistas();
+            const valorActual = select.value;
+            select.innerHTML = '<option value="TODAS">-- TODAS LAS UNIDADES --</option>';
             unidades.forEach(u => {
                 const opt = document.createElement('option');
-                opt.value = u; opt.textContent = u;
+                opt.value = u;
+                opt.textContent = u;
                 select.appendChild(opt);
             });
-            if (incluirOtra) select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
+            if (valorActual && (valorActual === "TODAS" || unidades.includes(valorActual))) {
+                select.value = valorActual;
+            }
+        }
+        
+        function obtenerRegistrosFiltrados() {
+            if (unidadFiltroActual === "TODAS") {
+                return registrosReservistas;
+            }
+            return registrosReservistas.filter(r => r.unidad_analista === unidadFiltroActual);
+        }
+        
+        function actualizarResumenUnidad() {
+            const registrosFiltrados = obtenerRegistrosFiltrados();
+            const resumenDiv = document.getElementById('resumenUnidad');
+            
+            if (unidadFiltroActual === "TODAS") {
+                resumenDiv.style.display = 'none';
+                return;
+            }
+            
+            const totalReservistas = registrosFiltrados.length;
+            const librosSet = new Set();
+            const analistasSet = new Set();
+            
+            registrosFiltrados.forEach(r => {
+                if (r.libro) librosSet.add(r.libro);
+                if (r.cedula_analista) analistasSet.add(r.cedula_analista);
+            });
+            
+            document.getElementById('nombreUnidadSeleccionada').innerText = unidadFiltroActual;
+            document.getElementById('resumenTotalReservistas').innerText = totalReservistas;
+            document.getElementById('resumenTotalLibros').innerText = librosSet.size;
+            document.getElementById('resumenTotalAnalistasUnidad').innerText = analistasSet.size;
+            resumenDiv.style.display = 'block';
         }
         
         function actualizarPanelOperador() {
             const hoy = getFechaHoy();
-            const reservistasHoy = registrosReservistas.filter(r => {
+            const registrosFiltrados = obtenerRegistrosFiltrados();
+            
+            const reservistasHoy = registrosFiltrados.filter(r => {
                 if(!r.timestamp) return false;
                 const fechaRegistro = r.timestamp.split('T')[0];
                 return fechaRegistro === hoy;
             });
             
             const analistasSet = new Set();
-            registrosReservistas.forEach(r => { if (r.cedula_analista) analistasSet.add(r.cedula_analista); });
+            registrosFiltrados.forEach(r => { if (r.cedula_analista) analistasSet.add(r.cedula_analista); });
             
             document.getElementById('totalHoy').innerText = reservistasHoy.length;
-            document.getElementById('totalReservistas').innerText = registrosReservistas.length;
+            document.getElementById('totalReservistas').innerText = registrosFiltrados.length;
             document.getElementById('totalAnalistas').innerText = analistasSet.size;
-            document.getElementById('diasTrabajados').innerText = new Set(registrosReservistas.map(r => r.timestamp ? r.timestamp.split('T')[0] : null).filter(Boolean)).size;
+            document.getElementById('diasTrabajados').innerText = new Set(registrosFiltrados.map(r => r.timestamp ? r.timestamp.split('T')[0] : null).filter(Boolean)).size;
             
             const tbody = document.getElementById('tbodyReservistas');
             if (tbody) {
-                const mostrados = [...registrosReservistas].reverse();
+                const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros para esta unidad</div></div></td>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
-                        const indiceOriginal = registrosReservistas.length - 1 - i;
+                        const indiceOriginal = registrosReservistas.indexOf(r);
                         return `<tr>
                             <td>${i+1} </div> </div>
                             <td>${formatearFechaVisible(r.timestamp)}</div> </div>
@@ -368,6 +441,21 @@
                     }).join('');
                 }
             }
+            
+            actualizarResumenUnidad();
+        }
+        
+        function actualizarSelectUnidad(selectId, incluirOtra = true) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const unidades = [...UNIDADES_BASE];
+            select.innerHTML = '<option value="">-- Seleccione --</option>';
+            unidades.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u; opt.textContent = u;
+                select.appendChild(opt);
+            });
+            if (incluirOtra) select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
         }
         
         function actualizarResumenLote() {
@@ -396,6 +484,19 @@
         }
         
         window.eliminarReservista = eliminarReservista;
+        
+        function aplicarFiltro() {
+            const select = document.getElementById('filtroUnidadAnalista');
+            unidadFiltroActual = select.value;
+            actualizarPanelOperador();
+        }
+        
+        function limpiarFiltro() {
+            unidadFiltroActual = "TODAS";
+            const select = document.getElementById('filtroUnidadAnalista');
+            if (select) select.value = "TODAS";
+            actualizarPanelOperador();
+        }
 
         // EVENTOS
         document.getElementById('btnAnalista').addEventListener('click', () => {
@@ -431,7 +532,6 @@
             document.getElementById('formularioCarga').style.display = 'block';
         });
 
-        // AGREGAR RESERVISTA(S) AL LOTE - CORREGIDO (DESDE SE CALCULA AUTOMÁTICAMENTE)
         document.getElementById('formReservista').addEventListener('submit', (e) => {
             e.preventDefault();
             const libro = document.getElementById('libroReservista').value.trim();
@@ -450,9 +550,7 @@
                 return;
             }
             
-            // Calcular 'desde' automáticamente (libro - 2)
             const desde = (parseInt(libro) - 2).toString();
-            
             const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
             let agregadas = 0;
             let errores = [];
@@ -525,21 +623,26 @@
                 alert('❌ Clave incorrecta');
             }
         });
+        
+        document.getElementById('btnFiltrarUnidad').addEventListener('click', aplicarFiltro);
+        document.getElementById('btnLimpiarFiltro').addEventListener('click', limpiarFiltro);
 
         document.getElementById('volverAnalista').addEventListener('click', () => { location.reload(); });
         document.getElementById('volverOperador').addEventListener('click', () => { location.reload(); });
 
         document.getElementById('btnGenerarInforme').addEventListener('click', () => {
             const ahora = new Date();
+            const registrosFiltrados = obtenerRegistrosFiltrados();
             const win = window.open();
             win.document.write(`
                 <html>
-                <head><title>Informe</title></head>
+                <head><title>Informe - ${unidadFiltroActual === "TODAS" ? "Todas las unidades" : unidadFiltroActual}</title></head>
                 <body style="font-family:sans-serif; padding:20px;">
                     <h2>📄 Reporte Consolidado</h2>
                     <p>Fecha: ${ahora.toLocaleString()}</p>
+                    <p>Unidad filtrada: <strong>${unidadFiltroActual === "TODAS" ? "TODAS LAS UNIDADES" : unidadFiltroActual}</strong></p>
                     <hr/>
-                    <h3>Total Reservistas: ${registrosReservistas.length}</h3>
+                    <h3>Total Reservistas: ${registrosFiltrados.length}</h3>
                 </body>
                 </html>
             `);
