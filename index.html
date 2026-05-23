@@ -245,7 +245,7 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXYT4Ui-cjKIH8Pddt16pYEkW0odAPGLziz1wQ2XUfIGP-muaIkA4NFV9OVkI3uIpf/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHTrk4aNmlns-R29lghBFmSu1jTLVbXBoAmfopsJi6kf6OIe3-XiLnmycxSIpJVNi6/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -334,17 +334,8 @@
         
         async function cargarMisRegistrosResumen(cedula) {
             try {
-                console.log("Consultando registros para:", cedula);
-                const respuesta = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        tipo: "mis_registros",
-                        cedula_analista: cedula
-                    })
-                });
+                const respuesta = await fetch(`${SCRIPT_URL}?mis_registros=${encodeURIComponent(cedula)}`);
                 const datos = await respuesta.json();
-                console.log("Respuesta recibida:", datos);
                 return datos;
             } catch(e) {
                 console.error('Error:', e);
@@ -398,7 +389,7 @@
             if (tbody) {
                 const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.indexOf(r);
@@ -489,7 +480,7 @@
                     <td>${r.libro} </div> </div>
                     <td>${r.desde} </div> </div>
                     <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></div> </div>
-                </table>
+                </tr>
             `).join('');
             document.getElementById('totalLote').innerText = loteActual.length;
         }
