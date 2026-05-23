@@ -319,11 +319,9 @@
     </div>
 
     <script>
-        // ==================== CONFIGURACIÓN ====================
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = google.script.run ? null : "URL_FALLBACK"; // Se usa google.script.run nativo
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzfvmGpKgyPWaT42AHafE5Otk8l6TxZwwczVowY3_5v86mJ_fjrVtZdSNGknCse9QZV/exec";
         
-        // UNIDADES BASE (mantenidas)
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
             "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
@@ -336,24 +334,22 @@
             "CAVEJB", "COLOG", "6TO CING"
         ];
         
-        // ==================== ESTADO EN MEMORIA (OPTIMIZADO) ====================
         let registros = [];
-        let unidadesSet = new Set(); // Cache de unidades
-        let loadingInicial = false;
-        
-        // ==================== FUNCIONES AUXILIARES ====================
-        function pad2(n) { return String(n).padStart(2, '0'); }
-        
+
+        function pad2(n) {
+            return String(n).padStart(2, '0');
+        }
+
         function getFechaHoy() {
             const d = new Date();
             return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         }
-        
+
         function getHoraLocal() {
             const d = new Date();
             return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
         }
-        
+
         function normalizarFecha(fecha) {
             if (!fecha) return '';
             const texto = String(fecha).trim();
@@ -363,14 +359,14 @@
             if (matchDMY) return `${matchDMY[3]}-${matchDMY[2]}-${matchDMY[1]}`;
             return texto;
         }
-        
+
         function formatearFechaVisible(fecha) {
             const f = normalizarFecha(fecha);
             if (!f || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return '---';
             const [y, m, d] = f.split('-');
             return `${d}/${m}/${y}`;
         }
-        
+
         function formatearHoraVisible(hora) {
             if (!hora) return '00:00:00';
             const h = String(hora).trim();
@@ -379,24 +375,65 @@
             if (match) return `${match[1]}:${match[2]}:00`;
             return '00:00:00';
         }
-        
-        // ==================== OPTIMIZACIÓN CLAVE: Actualización eficiente de unidades ====================
-        function actualizarSetUnidades() {
-            unidadesSet.clear();
-            UNIDADES_BASE.forEach(u => unidadesSet.add(u));
-            registros.forEach(r => {
-                if (r.unidad) unidadesSet.add(r.unidad);
-            });
+
+        function totalDeFecha(fecha) {
+            const fechaNorm = normalizarFecha(fecha);
+            return registros
+                .filter(r => normalizarFecha(r.fecha) === fechaNorm)
+                .reduce((sum, r) => sum + (parseInt(r.cedulas) || 0), 0);
+        }
+
+        function getNumeroReporte() {
+            const fechasUnicas = [...new Set(registros.map(r => normalizarFecha(r.fecha)).filter(Boolean))].sort();
+            const hoy = getFechaHoy();
+            const index = fechasUnicas.indexOf(hoy);
+            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
         }
         
-        function obtenerUnidadesOrdenadas() {
-            return Array.from(unidadesSet).sort();
+        async function cargarDatosDesdeNube() {
+            const loadingDiv = document.getElementById('loadingData');
+            try {
+                if (loadingDiv) loadingDiv.style.display = 'block';
+                const respuesta = await fetch(SCRIPT_URL);
+                const datos = await respuesta.json();
+                registros = Array.isArray(datos) ? datos : [];
+                console.log("Registros cargados:", registros.length);
+                actualizarPaneles();
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            } catch(e) {
+                console.error('Error:', e);
+                if (loadingDiv) loadingDiv.innerHTML = '⚠️ Error de conexión';
+            }
+        }
+        
+        async function guardarEnNube(nuevoRegistro) {
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(nuevoRegistro)
+                });
+                await cargarDatosDesdeNube();
+                return true;
+            } catch(e) { 
+                console.error('Error guardando:', e);
+                return false; 
+            }
+        }
+        
+        function obtenerUnidades() {
+            let unidades = [...UNIDADES_BASE];
+            registros.forEach(r => {
+                if (r.unidad && !unidades.includes(r.unidad)) unidades.push(r.unidad);
+            });
+            return unidades.sort();
         }
         
         function actualizarSelectUnidad() {
             const select = document.getElementById('unidadAnalista');
             if (!select) return;
-            const unidades = obtenerUnidadesOrdenadas();
+            const unidades = obtenerUnidades();
             const valorActual = select.value;
             select.innerHTML = '<option value="">-- Seleccione --</option>';
             unidades.forEach(u => {
@@ -407,172 +444,21 @@
             });
             select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
             if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) select.value = valorActual;
-            
             const campoNueva = document.getElementById('campoNuevaUnidad');
             if (select.value === "OTRA_UNIDAD") campoNueva.classList.add('visible');
             else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
         }
         
-        // ==================== CARGA DE DATOS OPTIMIZADA ====================
-        function cargarDatos() {
-            if (loadingInicial) return;
-            loadingInicial = true;
-            
-            google.script.run
-                .withSuccessHandler(function(datos) {
-                    registros = datos || [];
-                    actualizarSetUnidades();
-                    actualizarSelectUnidad();
-                    actualizarPaneles();
-                    loadingInicial = false;
-                })
-                .withFailureHandler(function(error) {
-                    console.error('Error cargando:', error);
-                    loadingInicial = false;
-                })
-                .obtenerRegistros();
-        }
-        
-        // ==================== GUARDADO OPTIMIZADO ====================
-        function guardarRegistro(nuevoRegistro) {
-            return new Promise((resolve, reject) => {
-                google.script.run
-                    .withSuccessHandler(function(resultado) {
-                        if (resultado && resultado.success) {
-                            resolve(true);
-                        } else {
-                            reject(false);
-                        }
-                    })
-                    .withFailureHandler(function() {
-                        reject(false);
-                    })
-                    .doPost({ postData: { contents: JSON.stringify(nuevoRegistro) } });
-            });
-        }
-        
-        // ==================== ACTUALIZACIÓN DE PANELES (OPTIMIZADA) ====================
-        function totalDeFecha(fecha) {
-            const fechaNorm = normalizarFecha(fecha);
-            let total = 0;
-            for (let i = 0; i < registros.length; i++) {
-                if (normalizarFecha(registros[i].fecha) === fechaNorm) {
-                    total += parseInt(registros[i].cedulas) || 0;
-                }
-            }
-            return total;
-        }
-        
-        function getNumeroReporte() {
-            const fechasUnicas = [];
-            const hoy = getFechaHoy();
-            for (let i = 0; i < registros.length; i++) {
-                const f = normalizarFecha(registros[i].fecha);
-                if (f && !fechasUnicas.includes(f)) fechasUnicas.push(f);
-            }
-            fechasUnicas.sort();
-            const index = fechasUnicas.indexOf(hoy);
-            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
-        }
-        
-        function actualizarPaneles() {
-            // Estadísticas
-            const hoy = getFechaHoy();
-            const totalHoy = totalDeFecha(hoy);
-            let totalCedulas = 0;
-            const acumulado = {};
-            const analistasPorUnidad = {};
-            const analistasSet = new Set();
-            
-            for (let i = 0; i < registros.length; i++) {
-                const r = registros[i];
-                const ced = parseInt(r.cedulas) || 0;
-                totalCedulas += ced;
-                const u = r.unidad || 'SIN UNIDAD';
-                acumulado[u] = (acumulado[u] || 0) + ced;
-                if (!analistasPorUnidad[u]) analistasPorUnidad[u] = new Set();
-                if (r.cedulaAnalista) {
-                    const cedulaStr = String(r.cedulaAnalista).trim();
-                    analistasPorUnidad[u].add(cedulaStr);
-                    analistasSet.add(cedulaStr);
-                }
-            }
-            
-            const diasSet = new Set();
-            for (let i = 0; i < registros.length; i++) {
-                const f = normalizarFecha(registros[i].fecha);
-                if (f) diasSet.add(f);
-            }
-            
-            document.getElementById('totalHoy').innerText = totalHoy;
-            document.getElementById('totalRegistros').innerText = registros.length;
-            document.getElementById('totalAcumulado').innerText = totalCedulas;
-            document.getElementById('totalAnalistas').innerText = analistasSet.size;
-            document.getElementById('diasTrabajados').innerText = diasSet.size;
-            
-            // Tabla de registros (optimizada: construir HTML directamente)
-            const tbodyTodos = document.getElementById('tbodyTodosRegistros');
-            if (tbodyTodos) {
-                if (registros.length === 0) {
-                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ Sin datos<\/td><\/tr>';
-                } else {
-                    let html = '';
-                    for (let i = registros.length - 1; i >= 0; i--) {
-                        const r = registros[i];
-                        const fechaForm = formatearFechaVisible(r.fecha);
-                        const horaForm = formatearHoraVisible(r.hora);
-                        html += `<tr>
-                            <td>${registros.length - i}<\/td>
-                            <td><strong>${fechaForm}<\/strong><\/td>
-                            <td>${horaForm}<\/td>
-                            <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}<\/span><\/td>
-                            <td>${r.unidad || 'N/A'}<\/td>
-                            <td>${r.libro || 'N/A'}<\/td>
-                            <td><strong>${parseInt(r.cedulas) || 0}<\/strong><\/td>
-                            <td>${r.observaciones || 'Ninguna'}<\/td>
-                            <td>
-                                <button class="btn-accion btn-editar" onclick="editarRegistro(${i})">✏️<\/button>
-                                <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${i})">🗑️<\/button>
-                            <\/td>
-                        <\/tr>`;
-                    }
-                    tbodyTodos.innerHTML = html;
-                }
-            }
-            
-            // Tabla acumulado por unidad
-            const tbodyAcum = document.getElementById('tbodyAcumulado');
-            if (tbodyAcum) {
-                const unidades = Object.keys(acumulado).sort();
-                if (unidades.length === 0) {
-                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos<\/td><\/tr>';
-                } else {
-                    let html = '';
-                    for (let i = 0; i < unidades.length; i++) {
-                        const u = unidades[i];
-                        html += `<tr>
-                            <td>${u}<\/td>
-                            <td><strong>${acumulado[u]}<\/strong><\/td>
-                            <td>${analistasPorUnidad[u].size} analista(s)<\/td>
-                        <\/tr>`;
-                    }
-                    tbodyAcum.innerHTML = html;
-                }
-            }
-        }
-        
-        // ==================== MANEJADORES DE EVENTOS ====================
-        window.eliminarRegistro = function(index) {
+        async function eliminarRegistro(index) {
             if (confirm('¿Eliminar este registro permanentemente?')) {
                 registros.splice(index, 1);
-                actualizarSetUnidades();
-                actualizarSelectUnidad();
+                localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
                 actualizarPaneles();
                 alert('✅ Registro eliminado');
             }
-        };
+        }
         
-        window.editarRegistro = function(index) {
+        async function editarRegistro(index) {
             const r = registros[index];
             const nuevaCedula = prompt('Editar cédula del analista:', r.cedulaAnalista);
             if (!nuevaCedula) return;
@@ -589,7 +475,7 @@
             }
             const nuevasObs = prompt('Editar observaciones:', r.observaciones || 'Ninguna');
             
-            registros[index] = {
+            const registroEditado = {
                 fecha: r.fecha,
                 cedulaAnalista: nuevaCedula,
                 unidad: nuevaUnidad,
@@ -599,11 +485,87 @@
                 hora: r.hora || getHoraLocal()
             };
             
-            actualizarSetUnidades();
-            actualizarSelectUnidad();
-            actualizarPaneles();
+            registros[index] = registroEditado;
+            localStorage.setItem('digitalizacion_registros_backup', JSON.stringify(registros));
             alert('✅ Registro editado');
-        };
+            actualizarPaneles();
+        }
+        
+        function actualizarPaneles() {
+            actualizarSelectUnidad();
+            
+            const hoy = getFechaHoy();
+            const totalHoy = totalDeFecha(hoy);
+
+            let totalCedulas = 0;
+            const acumulado = {};
+            const analistasPorUnidad = {};
+            const analistasSet = new Set();
+
+            registros.forEach(r => {
+                const ced = parseInt(r.cedulas) || 0;
+                totalCedulas += ced;
+                const u = r.unidad || 'SIN UNIDAD';
+                acumulado[u] = (acumulado[u] || 0) + ced;
+                if (!analistasPorUnidad[u]) analistasPorUnidad[u] = new Set();
+                if (r.cedulaAnalista) {
+                    const cedulaStr = String(r.cedulaAnalista).trim();
+                    analistasPorUnidad[u].add(cedulaStr);
+                    analistasSet.add(cedulaStr);
+                }
+            });
+            
+            document.getElementById('totalHoy').innerText = totalHoy;
+            document.getElementById('totalRegistros').innerText = registros.length;
+            document.getElementById('totalAcumulado').innerText = totalCedulas;
+            document.getElementById('totalAnalistas').innerText = analistasSet.size;
+            document.getElementById('diasTrabajados').innerText = new Set(registros.map(r => normalizarFecha(r.fecha)).filter(Boolean)).size;
+            
+            const tbodyTodos = document.getElementById('tbodyTodosRegistros');
+            if (tbodyTodos) {
+                const ordenados = [...registros].reverse();
+                if (ordenados.length === 0) {
+                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ Sin datos</td></tr>';
+                } else {
+                    tbodyTodos.innerHTML = ordenados.map((r, i) => {
+                        const fechaForm = formatearFechaVisible(r.fecha);
+                        const horaForm = formatearHoraVisible(r.hora);
+                        return `
+                            <tr>
+                                <td>${i+1}</td>
+                                <td><strong>${fechaForm}</strong></td>
+                                <td>${horaForm}</td>
+                                <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}</span></td>
+                                <td>${r.unidad || 'N/A'}</td>
+                                <td>${r.libro || 'N/A'}</td>
+                                <td><strong>${parseInt(r.cedulas) || 0}</strong></td>
+                                <td>${r.observaciones || 'Ninguna'}</td>
+                                <td>
+                                    <button class="btn-accion btn-editar" onclick="editarRegistro(${registros.indexOf(r)})">✏️</button>
+                                    <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${registros.indexOf(r)})">🗑️</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            }
+            
+            const tbodyAcum = document.getElementById('tbodyAcumulado');
+            if (tbodyAcum) {
+                const unidades = Object.keys(acumulado).sort();
+                if (unidades.length === 0) {
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos</td></tr>';
+                } else {
+                    tbodyAcum.innerHTML = unidades.map(u => `
+                        <tr>
+                            <td>${u}</td>
+                            <td><strong>${acumulado[u]}</strong></td>
+                            <td>${analistasPorUnidad[u].size} analista(s)</td>
+                        </tr>
+                    `).join('');
+                }
+            }
+        }
         
         function mostrarAnalista() {
             document.getElementById('pantallaInicio').style.display = 'none';
@@ -633,11 +595,11 @@
             document.getElementById('panelOperador').classList.remove('panel-activo');
         }
         
-        function ingresarOperador() {
+        async function ingresarOperador() {
             if (document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
                 document.getElementById('passwordOperador').style.display = 'none';
                 document.getElementById('contenidoOperador').style.display = 'block';
-                cargarDatos();
+                await cargarDatosDesdeNube();
             } else alert('❌ Clave incorrecta');
         }
         
@@ -645,25 +607,18 @@
             const fechaCorta = formatearFechaVisible(getFechaHoy());
             const hoy = getFechaHoy();
             const totalHoy = totalDeFecha(hoy);
-            
+
             let totalAcum = 0;
             const unidades = new Set(), analistas = new Set(), detalle = {};
-            
-            for (let i = 0; i < registros.length; i++) {
-                const r = registros[i];
+
+            registros.forEach(r => {
                 const ced = parseInt(r.cedulas) || 0;
                 totalAcum += ced;
                 if (r.unidad) unidades.add(r.unidad);
                 if (r.cedulaAnalista) analistas.add(String(r.cedulaAnalista).trim());
                 const u = r.unidad || 'SIN UNIDAD';
                 detalle[u] = (detalle[u] || 0) + ced;
-            }
-            
-            const diasSet = new Set();
-            for (let i = 0; i < registros.length; i++) {
-                const f = normalizarFecha(registros[i].fecha);
-                if (f) diasSet.add(f);
-            }
+            });
             
             const numeroReporte = getNumeroReporte();
             
@@ -702,13 +657,13 @@
                     <div class="indicadores">
                         <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
                         <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
-                        <div class="indicador"><div class="indicador-valor">${diasSet.size}</div><div>DÍAS TRABAJADOS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${new Set(registros.map(r => normalizarFecha(r.fecha)).filter(Boolean)).size}</div><div>DÍAS TRABAJADOS</div></div>
                         <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
                     </div>
                     <h4>📋 Detalle por Unidad</h4>
                     <table style="width:100%">
                         <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
-                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td><\/tr>`).join('')}</tbody>
+                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td></tr>`).join('')}</tbody>
                     </table>
                     <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div>
                 </div>
@@ -718,7 +673,9 @@
             win.document.close();
         }
         
-        // ==================== EVENT LISTENERS ====================
+        window.eliminarRegistro = eliminarRegistro;
+        window.editarRegistro = editarRegistro;
+        
         document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
         document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
         document.getElementById('volverAnalista').addEventListener('click', volverInicio);
@@ -785,41 +742,20 @@
             }
             
             document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
+            const exito = await guardarEnNube({ fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora });
+            document.getElementById('mensajeAnalista').innerHTML = exito ? '<div class="mensaje-exito">✅ ¡Registro guardado en la nube!</div>' : '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
             
-            const nuevoRegistro = { fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora };
-            
-            const exito = await guardarRegistro(nuevoRegistro);
-            
-            if (exito) {
-                // Agregar localmente y actualizar
-                nuevoRegistro.fecha = fecha;
-                nuevoRegistro.cedulaAnalista = cedula;
-                nuevoRegistro.unidad = unidadFinal;
-                nuevoRegistro.libro = libro;
-                nuevoRegistro.cedulas = cedulas;
-                nuevoRegistro.observaciones = obs;
-                nuevoRegistro.hora = hora;
-                registros.push(nuevoRegistro);
-                actualizarSetUnidades();
-                actualizarSelectUnidad();
-                actualizarPaneles();
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado en la nube!</div>';
-                
-                document.getElementById('cedulaAnalista').value = '';
-                document.getElementById('unidadAnalista').value = '';
-                document.getElementById('nuevaUnidadTexto').value = '';
-                document.getElementById('libroAnalista').value = '';
-                document.getElementById('cedulasAnalista').value = '';
-                document.getElementById('observacionesAnalista').value = '';
-                document.getElementById('campoNuevaUnidad').classList.remove('visible');
-            } else {
-                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
-            }
-            
+            document.getElementById('cedulaAnalista').value = '';
+            document.getElementById('unidadAnalista').value = '';
+            document.getElementById('nuevaUnidadTexto').value = '';
+            document.getElementById('libroAnalista').value = '';
+            document.getElementById('cedulasAnalista').value = '';
+            document.getElementById('observacionesAnalista').value = '';
+            document.getElementById('campoNuevaUnidad').classList.remove('visible');
+            actualizarSelectUnidad();
             setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
         });
         
-        // Inicializar
         actualizarSelectUnidad();
     </script>
 </body>
