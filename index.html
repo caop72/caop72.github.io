@@ -167,11 +167,11 @@
                         <div style="font-size: 32px; font-weight: bold; color: #2e7d32;" id="totalGeneralAnalista">0</div>
                         <div style="font-size: 14px; color: #666;">Total de cédulas digitalizadas por usted</div>
                     </div>
-                    <h4>📋 DESGLOSE POR AÑO</h4>
+                    <h4>📋 DESGLOSE POR AÑO Y UNIDAD</h4>
                     <div class="tabla-container">
                         <table style="width: 100%;">
                             <thead>
-                                <tr><th>AÑO</th><th>CÉDULAS DIGITALIZADAS</th></tr>
+                                <tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr>
                             </thead>
                             <tbody id="tbodyMisRegistros"></tbody>
                         </table>
@@ -203,22 +203,10 @@
                 <div id="loadingData" class="loading" style="display: none;"><div class="spinner"></div> Cargando datos...</div>
                 <div id="dataContent">
                     <div class="stats-grid">
-                        <div class="stat-card stat-card-azul">
-                            <div class="stat-number" id="totalHoy">0</div>
-                            <div class="stat-label">📊 CÉDULAS DEL DÍA</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalReservistas">0</div>
-                            <div class="stat-label">👥 RESERVISTAS</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="totalAnalistas">0</div>
-                            <div class="stat-label">👥 ANALISTAS</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-number" id="diasTrabajados">0</div>
-                            <div class="stat-label">📅 DÍAS</div>
-                        </div>
+                        <div class="stat-card stat-card-azul"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">📊 CÉDULAS DEL DÍA</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalReservistas">0</div><div class="stat-label">👥 RESERVISTAS</div></div>
+                        <div class="stat-card"><div class="stat-number" id="totalAnalistas">0</div><div class="stat-label">👥 ANALISTAS</div></div>
+                        <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">📅 DÍAS</div></div>
                     </div>
 
                     <div class="buscador">
@@ -234,9 +222,7 @@
 
                     <div class="filtro-unidad">
                         <label>🏢 Filtrar por unidad del analista:</label>
-                        <select id="filtroUnidadAnalista">
-                            <option value="TODAS">-- TODAS LAS UNIDADES --</option>
-                        </select>
+                        <select id="filtroUnidadAnalista"><option value="TODAS">-- TODAS LAS UNIDADES --</option></select>
                         <button id="btnFiltrarUnidad">🔍 APLICAR FILTRO</button>
                         <button id="btnLimpiarFiltro" style="background: #6c757d;">🗑️ LIMPIAR FILTRO</button>
                     </div>
@@ -245,9 +231,7 @@
                         <h4>📋 BASE DE DATOS DE RESERVISTAS</h4>
                         <div class="tabla-container">
                             <table id="tablaReservistas">
-                                <thead>
-                                    <tr><th>#</th><th>FECHA</th><th>ANALISTA</th><th>UNIDAD ANALISTA</th><th>LIBRO</th><th>UNIDAD_R</th><th>CÉDULA_R</th><th>DESDE</th><th>ACCIÓN</th></tr>
-                                </thead>
+                                <thead><tr><th>#</th><th>FECHA</th><th>ANALISTA</th><th>UNIDAD ANALISTA</th><th>LIBRO</th><th>UNIDAD_R</th><th>CÉDULA_R</th><th>DESDE</th><th>ACCIÓN</th></tr></thead>
                                 <tbody id="tbodyReservistas"></tbody>
                             </table>
                         </div>
@@ -261,7 +245,7 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxx-6aba6acM_UmlY5i8d0ZHhvkP3gyR6kG2On48wk8X39D7WoHGUrREqbvJ7Je7_X4/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwXYT4Ui-cjKIH8Pddt16pYEkW0odAPGLziz1wQ2XUfIGP-muaIkA4NFV9OVkI3uIpf/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -362,7 +346,7 @@
                 return datos;
             } catch(e) {
                 console.error('Error:', e);
-                return { success: false, totalGeneral: 0, registrosPorAño: [] };
+                return { success: false, totalGeneral: 0, registrosPorUnidad: [] };
             }
         }
         
@@ -392,22 +376,14 @@
         }
         
         function obtenerRegistrosFiltrados() {
-            if (unidadFiltroActual === "TODAS") {
-                return registrosReservistas;
-            }
+            if (unidadFiltroActual === "TODAS") return registrosReservistas;
             return registrosReservistas.filter(r => r.unidad_analista === unidadFiltroActual);
         }
         
         function actualizarPanelOperador() {
             const hoy = getFechaHoy();
             const registrosFiltrados = obtenerRegistrosFiltrados();
-            
-            const reservistasHoy = registrosFiltrados.filter(r => {
-                if(!r.timestamp) return false;
-                const fechaRegistro = r.timestamp.split('T')[0];
-                return fechaRegistro === hoy;
-            });
-            
+            const reservistasHoy = registrosFiltrados.filter(r => r.timestamp && r.timestamp.split('T')[0] === hoy);
             const analistasSet = new Set();
             registrosFiltrados.forEach(r => { if (r.cedula_analista) analistasSet.add(r.cedula_analista); });
             
@@ -420,20 +396,20 @@
             if (tbody) {
                 const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</td></tr>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.indexOf(r);
                         return `<tr>
-                            <td>${i+1} </div> </div>
-                            <td>${formatearFechaVisible(r.timestamp)}</div> </div>
-                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></div> </div>
-                            <td>${r.unidad_analista || 'N/A'} </div> </div>
-                            <td>${r.libro || 'N/A'} </div> </div>
-                            <td>${r.unidad_r || 'N/A'} </div> </div>
-                            <td><strong>${r.cedula_r || 'N/A'}</strong></div> </div>
-                            <td>${r.desde || 'N/A'} </div> </div>
-                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></div> </div>
+                            <td>${i+1}</td>
+                            <td>${formatearFechaVisible(r.timestamp)}</td>
+                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></td>
+                            <td>${r.unidad_analista || 'N/A'}</td>
+                            <td>${r.libro || 'N/A'}</td>
+                            <td>${r.unidad_r || 'N/A'}</td>
+                            <td><strong>${r.cedula_r || 'N/A'}</strong></td>
+                            <td>${r.desde || 'N/A'}</td>
+                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></td>
                         </tr>`;
                     }).join('');
                 }
@@ -467,14 +443,11 @@
             if (!select) return;
             
             let unidades = [...UNIDADES_BASE];
-            
-            // Agregar unidades nuevas de los registros existentes
             registrosReservistas.forEach(r => {
                 if (r.unidad_analista && !unidades.includes(r.unidad_analista)) {
                     unidades.push(r.unidad_analista);
                 }
             });
-            
             unidades = [...new Set(unidades)].sort();
             
             const valorActual = select.value;
@@ -486,9 +459,7 @@
                 select.appendChild(opt);
             });
             if (incluirOtra) select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
-            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) {
-                select.value = valorActual;
-            }
+            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) select.value = valorActual;
             
             const campoNueva = document.getElementById('campoNuevaUnidadPrincipal');
             if (campoNueva) {
@@ -510,12 +481,12 @@
             document.getElementById('resumenLote').style.display = 'block';
             tbody.innerHTML = loteActual.map((r, i) => `
                 <tr>
-                    <td>${i+1} </div> </div>
-                    <td>${r.cedula_r} </div> </div>
-                    <td>${r.unidad_r} </div> </div>
-                    <td>${r.libro} </div> </div>
-                    <td>${r.desde} </div> </div>
-                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></div> </div>
+                    <td>${i+1}</td>
+                    <td>${r.cedula_r}</td>
+                    <td>${r.unidad_r}</td>
+                    <td>${r.libro}</td>
+                    <td>${r.desde}</td>
+                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></td>
                 </tr>
             `).join('');
             document.getElementById('totalLote').innerText = loteActual.length;
@@ -529,8 +500,7 @@
         window.eliminarReservista = eliminarReservista;
         
         function aplicarFiltro() {
-            const select = document.getElementById('filtroUnidadAnalista');
-            unidadFiltroActual = select.value;
+            unidadFiltroActual = document.getElementById('filtroUnidadAnalista').value;
             actualizarPanelOperador();
         }
         
@@ -596,19 +566,20 @@
             if (misRegistros.success) {
                 document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
                 const tbody = document.getElementById('tbodyMisRegistros');
-                if (misRegistros.registrosPorAño && misRegistros.registrosPorAño.length > 0) {
-                    tbody.innerHTML = misRegistros.registrosPorAño.map(r => `
+                if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
+                    tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
                         <tr>
-                            <td><strong>${r.año}</strong> </div> </div>
+                            <td><strong>${r.año}</strong></td>
+                            <td>${r.unidad_r}</td>
                             <td>${r.total} cédulas</div> </div>
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center">No tiene registros aún</div></div></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
                 }
             } else {
                 document.getElementById('totalGeneralAnalista').innerText = '0';
-                document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="2" style="text-align:center">Error al cargar</div></div></tr>';
+                document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="3" style="text-align:center">Error al cargar</div></div><tr>';
             }
             
             document.getElementById('formularioAnalista').style.display = 'none';
@@ -682,10 +653,11 @@
                 if (misRegistros.success) {
                     document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
                     const tbody = document.getElementById('tbodyMisRegistros');
-                    if (misRegistros.registrosPorAño && misRegistros.registrosPorAño.length > 0) {
-                        tbody.innerHTML = misRegistros.registrosPorAño.map(r => `
+                    if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
+                        tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
                             <tr>
-                                <td><strong>${r.año}</strong> </div> </div>
+                                <td><strong>${r.año}</strong></td>
+                                <td>${r.unidad_r}</td>
                                 <td>${r.total} cédulas</div> </div>
                             </tr>
                         `).join('');
