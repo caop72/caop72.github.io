@@ -1,572 +1,826 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <base target="_top">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sistema de Registro</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-    
-    body {
-      background: #f0f2f5;
-      min-height: 100vh;
-      padding: 20px;
-    }
-    
-    /* Pantalla de selección */
-    .screen-selector {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 80vh;
-      gap: 30px;
-      flex-wrap: wrap;
-    }
-    
-    .card-rol {
-      background: white;
-      border-radius: 20px;
-      padding: 40px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      width: 250px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .card-rol:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    }
-    
-    .card-rol h2 {
-      color: #1e3a5f;
-      margin: 20px 0 10px;
-    }
-    
-    .card-rol p {
-      color: #666;
-      font-size: 14px;
-    }
-    
-    .emoji-rol {
-      font-size: 64px;
-    }
-    
-    /* Paneles */
-    .panel {
-      display: none;
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    .panel.active {
-      display: block;
-    }
-    
-    /* Botón volver */
-    .btn-volver {
-      background: #6c757d;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-bottom: 20px;
-    }
-    
-    /* Panel Operador */
-    .panel-operador {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 0;
-    }
-    
-    .tarjetas {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    
-    .tarjeta {
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-      color: white;
-    }
-    
-    .tarjeta-numero {
-      font-size: 36px;
-      font-weight: bold;
-    }
-    
-    .buscador {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-    }
-    
-    .buscador input {
-      flex: 1;
-      padding: 12px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-    
-    .resultado-item {
-      background: #f8f9fa;
-      border-radius: 10px;
-      padding: 12px;
-      margin-top: 10px;
-      border-left: 4px solid #667eea;
-    }
-    
-    /* Panel Analista */
-    .panel-analista {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .analista-header {
-      background: #1e3a5f;
-      color: white;
-      padding: 20px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-    
-    .lote-actual {
-      padding: 24px;
-      border-bottom: 1px solid #e9ecef;
-    }
-    
-    .campo-analista {
-      display: flex;
-      align-items: center;
-      margin-bottom: 15px;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    
-    .campo-analista label {
-      width: 180px;
-      font-weight: 600;
-    }
-    
-    .campo-analista select, .campo-analista input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-    }
-    
-    .btn-agregar-analista {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    
-    .checkbox-line {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    
-    .boton-agregar {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    
-    .mi-actividad {
-      background: #e9ecef;
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-    }
-    
-    .mi-actividad span:last-child {
-      font-size: 28px;
-      font-weight: bold;
-      color: #1e3a5f;
-    }
-    
-    .tabla-wrapper {
-      padding: 20px;
-      overflow-x: auto;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    
-    th {
-      background: #1e3a5f;
-      color: white;
-      padding: 12px;
-      text-align: left;
-    }
-    
-    td {
-      padding: 10px 12px;
-      border-bottom: 1px solid #dee2e6;
-    }
-    
-    .status {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #28a745;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 1000;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Jornada de Digitalización - Reserva Militar</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 16px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .access-cards {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: center;
+            min-height: 85vh;
+            flex-wrap: wrap;
+        }
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            flex: 1;
+            min-width: 260px;
+            max-width: 350px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .card:hover { transform: translateY(-8px); }
+        .card-analista { border-top: 8px solid #4CAF50; }
+        .card-operador { border-top: 8px solid #FF9800; }
+        .card h2 { margin-bottom: 12px; color: #1e3c72; font-size: 26px; }
+        .card p { color: #555; margin-bottom: 20px; }
+        .card button {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            display: none;
+        }
+        .panel-activo { display: block; }
+        
+        .header-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .header-panel h2 { color: #1e3c72; font-size: 20px; }
+        .btn-volver {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        
+        .form-analista { background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e3c72; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        button[type="submit"] {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        .stat-card-azul {
+            background: linear-gradient(135deg, #2196F3 0%, #0b5e9e 100%);
+        }
+        .stat-number { font-size: 28px; font-weight: bold; }
+        .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
+        
+        .seccion-tabla { margin-bottom: 25px; }
+        .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
+        .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #1e3c72; color: white; position: sticky; top: 0; white-space: nowrap; }
+        td { white-space: nowrap; }
+        .btn-accion {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            margin: 0 2px;
+        }
+        .btn-editar { background: #ffc107; color: #1e3c72; }
+        .btn-eliminar { background: #dc3545; color: white; }
+        
+        .password-area { text-align: center; padding: 30px 20px; }
+        .password-area input {
+            padding: 14px;
+            width: 100%;
+            max-width: 280px;
+            margin: 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .mensaje-exito { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        .mensaje-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
+        
+        .campo-nueva-unidad { display: none; }
+        .campo-nueva-unidad.visible { display: block; }
+        
+        .badge-analista {
+            background: #e9ecef;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 11px;
+            color: #495057;
+            display: inline-block;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1e3c72;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-number { font-size: 24px; }
+            th, td { font-size: 11px; padding: 6px 4px; }
+            .btn-accion { padding: 3px 6px; font-size: 10px; }
+        }
+    </style>
 </head>
 <body>
-
-<!-- Pantalla de selección -->
-<div id="screenSelector" class="screen-selector">
-  <div class="card-rol" onclick="seleccionarRol('analista')">
-    <div class="emoji-rol">📋</div>
-    <h2>ANALISTA</h2>
-    <p>Registrar lotes de cédulas</p>
-  </div>
-  <div class="card-rol" onclick="seleccionarRol('operador')">
-    <div class="emoji-rol">📊</div>
-    <h2>OPERADOR</h2>
-    <p>Estadísticas y búsquedas</p>
-  </div>
-</div>
-
-<!-- Panel OPERADOR -->
-<div id="panelOperador" class="panel">
-  <button class="btn-volver" onclick="volverAlSelector()">← Volver</button>
-  <div class="panel-operador">
-    <div class="tarjetas">
-      <div class="tarjeta">
-        <div class="tarjeta-numero" id="totalCedulasDia">0</div>
-        <div>T CÉDULAS DEL DÍA</div>
-      </div>
-      <div class="tarjeta">
-        <div class="tarjeta-numero" id="totalReservistas">0</div>
-        <div>RESERVISTAS</div>
-      </div>
-      <div class="tarjeta">
-        <div class="tarjeta-numero" id="totalAnalistas">0</div>
-        <div>ANALISTAS</div>
-      </div>
-      <div class="tarjeta">
-        <div class="tarjeta-numero" id="totalDias">0</div>
-        <div>DÍAS</div>
-      </div>
-    </div>
-    
-    <div class="buscador">
-      <label>🔍 Buscar cédula de reservista:</label>
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <input type="text" id="buscarCedula" placeholder="8067943">
-        <button onclick="buscarReservista()" style="background:#667eea; color:white; border:none; padding:12px 24px; border-radius:8px;">Buscar</button>
-      </div>
-      <div id="resultadosBusqueda"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Panel ANALISTA -->
-<div id="panelAnalista" class="panel">
-  <button class="btn-volver" onclick="volverAlSelector()">← Volver</button>
-  <div class="panel-analista">
-    <div class="analista-header">📋 REGISTRO PARA ANALISTAS</div>
-    
-    <div class="lote-actual">
-      <h3>IDENTIFICACIÓN DEL ANALISTA</h3>
-      <div class="campo-analista">
-        <label>Cédula del analista:</label>
-        <select id="selectAnalista" onchange="cargarActividadAnalista()">
-          <option value="">Seleccione su cédula...</option>
-        </select>
-        <input type="text" id="nuevaCedulaAnalista" placeholder="Nueva cédula" style="width:150px;">
-        <input type="text" id="nuevaUnidadAnalista" placeholder="Nueva unidad" style="width:150px;">
-        <button class="btn-agregar-analista" onclick="agregarNuevoAnalista()">+</button>
-      </div>
-      
-      <h3 style="margin-top: 30px;">LOTE ACTUAL</h3>
-      <div class="checkbox-line">
-        <input type="checkbox" id="checkLibro">
-        <label>Libro (año que estás digitalizando):</label>
-        <input type="number" id="anioLibro" placeholder="1975" style="width:120px;">
-      </div>
-      
-      <div class="checkbox-line">
-        <input type="checkbox" id="checkUnidad" checked>
-        <label>Unidad del reservista:</label>
-        <input type="text" id="unidadReservista" placeholder="11 BRIGADA" style="flex:1;">
-      </div>
-      
-      <div class="checkbox-line">
-        <input type="checkbox" id="checkCedulas" checked>
-        <label>Cédula(s) del reservista:</label>
-        <input type="text" id="cedulasReservista" placeholder="11526483, 12827266" style="flex:1;">
-      </div>
-      
-      <p style="font-size: 12px; color: #666; margin-left: 30px;">Puedes escribir varias cédulas separadas por coma.</p>
-      
-      <button class="boton-agregar" id="btnAgregarLote">+ AGREGAR RESERVISTA(S) AL LOTE</button>
-    </div>
-    
-    <div class="mi-actividad">
-      <span>🎯 MI ACTIVIDAD</span>
-      <span id="totalActividad">0</span>
-    </div>
-    <div style="padding: 0 20px 10px 20px; font-size: 12px; color: #666;">Total de cédulas digitalizadas por usted</div>
-    
-    <div class="tabla-wrapper">
-      <table id="tablaDesglose">
-        <thead><tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr></thead>
-        <tbody id="tablaBody"><tr><td colspan="3" style="text-align:center;">Seleccione un analista</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="statusMsg" class="status">✅ Listo</div>
-
-<script>
-  // Estado en memoria (optimización)
-  let indexMap = new Map();
-  let totalCedulasAnalista = 0;
-  let analistaActual = null;
-  
-  function mostrarStatus(msg, error = false) {
-    const div = document.getElementById('statusMsg');
-    div.textContent = msg;
-    div.style.background = error ? '#dc3545' : '#28a745';
-    div.style.opacity = '1';
-    setTimeout(() => div.style.opacity = '0', 2000);
-  }
-  
-  function seleccionarRol(rol) {
-    document.getElementById('screenSelector').style.display = 'none';
-    if (rol === 'analista') {
-      document.getElementById('panelAnalista').classList.add('active');
-      cargarListaAnalistas();
-    } else {
-      document.getElementById('panelOperador').classList.add('active');
-      cargarEstadisticasOperador();
-    }
-  }
-  
-  function volverAlSelector() {
-    document.getElementById('panelAnalista').classList.remove('active');
-    document.getElementById('panelOperador').classList.remove('active');
-    document.getElementById('screenSelector').style.display = 'flex';
-    indexMap.clear();
-    totalCedulasAnalista = 0;
-  }
-  
-  // ==================== ANALISTA ====================
-  function cargarListaAnalistas() {
-    google.script.run
-      .withSuccessHandler((analistas) => {
-        const select = document.getElementById('selectAnalista');
-        select.innerHTML = '<option value="">Seleccione su cédula...</option>';
-        for (const a of analistas) {
-          const option = document.createElement('option');
-          option.value = a.cedula;
-          option.textContent = `${a.cedula} - ${a.unidad}`;
-          option.setAttribute('data-unidad', a.unidad);
-          select.appendChild(option);
-        }
-      })
-      .obtenerListaAnalistas();
-  }
-  
-  function agregarNuevoAnalista() {
-    const cedula = document.getElementById('nuevaCedulaAnalista').value.trim();
-    const unidad = document.getElementById('nuevaUnidadAnalista').value.trim().toUpperCase();
-    
-    if (!cedula || !unidad) {
-      mostrarStatus('❌ Ingrese cédula y unidad del nuevo analista', true);
-      return;
-    }
-    
-    google.script.run
-      .withSuccessHandler((result) => {
-        if (result.success) {
-          mostrarStatus('✅ Analista agregado');
-          document.getElementById('nuevaCedulaAnalista').value = '';
-          document.getElementById('nuevaUnidadAnalista').value = '';
-          cargarListaAnalistas();
-        } else {
-          mostrarStatus('❌ Error al agregar', true);
-        }
-      })
-      .agregarNuevoAnalista(cedula, unidad);
-  }
-  
-  function cargarActividadAnalista() {
-    const select = document.getElementById('selectAnalista');
-    const cedula = select.value;
-    
-    if (!cedula) {
-      document.getElementById('tablaBody').innerHTML = '<tr><td colspan="3" style="text-align:center;">Seleccione un analista</td></tr>';
-      document.getElementById('totalActividad').textContent = '0';
-      return;
-    }
-    
-    analistaActual = cedula;
-    
-    google.script.run
-      .withSuccessHandler((data) => {
-        if (data.success) {
-          totalCedulasAnalista = data.totalCedulas;
-          document.getElementById('totalActividad').textContent = totalCedulasAnalista;
-          
-          const tbody = document.getElementById('tablaBody');
-          tbody.innerHTML = '';
-          indexMap.clear();
-          
-          const resumen = data.resumen || {};
-          for (const [clave, cantidad] of Object.entries(resumen)) {
-            const [anio, unidad] = clave.split('|');
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${anio}</td><td>${unidad}</td><td class="count-cell">${cantidad} cédula${cantidad !== 1 ? 's' : ''}</td>`;
-            tbody.appendChild(tr);
-            indexMap.set(clave, { rowElement: tr, count: cantidad });
-          }
-          
-          if (Object.keys(resumen).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Sin registros aún</td></tr>';
-          }
-        }
-      })
-      .obtenerActividadAnalista(cedula);
-  }
-  
-  function actualizarCeldaCount(rowElement, nuevoCount) {
-    const cell = rowElement.querySelector('.count-cell');
-    if (cell) cell.textContent = `${nuevoCount} cédula${nuevoCount !== 1 ? 's' : ''}`;
-  }
-  
-  document.getElementById('btnAgregarLote').addEventListener('click', () => {
-    const cedulaAnalista = document.getElementById('selectAnalista').value;
-    if (!cedulaAnalista) {
-      mostrarStatus('❌ Seleccione su cédula de analista primero', true);
-      return;
-    }
-    
-    const anio = document.getElementById('anioLibro').value.trim();
-    const unidadReservista = document.getElementById('unidadReservista').value.trim().toUpperCase();
-    const cedulasRaw = document.getElementById('cedulasReservista').value.trim();
-    
-    if (!anio || !unidadReservista || !cedulasRaw) {
-      mostrarStatus('❌ Complete año, unidad y cédula(s)', true);
-      return;
-    }
-    
-    const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
-    if (listaCedulas.length === 0) return;
-    
-    const clave = `${anio}|${unidadReservista}`;
-    const cantidadNueva = listaCedulas.length;
-    
-    // Actualización optimista UI
-    let filaExistente = indexMap.get(clave);
-    if (filaExistente) {
-      filaExistente.count += cantidadNueva;
-      actualizarCeldaCount(filaExistente.rowElement, filaExistente.count);
-    } else {
-      const tbody = document.getElementById('tablaBody');
-      if (tbody.querySelector('td[colspan="3"]')) tbody.innerHTML = '';
-      const nuevaFila = document.createElement('tr');
-      nuevaFila.innerHTML = `<td>${anio}</td><td>${unidadReservista}</td><td class="count-cell">${cantidadNueva} cédula${cantidadNueva !== 1 ? 's' : ''}</td>`;
-      tbody.appendChild(nuevaFila);
-      indexMap.set(clave, { rowElement: nuevaFila, count: cantidadNueva });
-    }
-    
-    totalCedulasAnalista += cantidadNueva;
-    document.getElementById('totalActividad').textContent = totalCedulasAnalista;
-    
-    // Envío al servidor
-    google.script.run
-      .withSuccessHandler((result) => {
-        if (result.success) {
-          mostrarStatus(`✅ +${cantidadNueva} cédula(s) guardadas`);
-          document.getElementById('cedulasReservista').value = '';
-        } else {
-          mostrarStatus(`❌ Error: ${result.error}`, true);
-        }
-      })
-      .withFailureHandler(() => mostrarStatus('❌ Error de conexión', true))
-      .registrarLote({
-        anio: anio,
-        unidadReservista: unidadReservista,
-        cedulas: listaCedulas,
-        cedulaAnalista: cedulaAnalista
-      });
-  });
-  
-  // ==================== OPERADOR ====================
-  function cargarEstadisticasOperador() {
-    google.script.run
-      .withSuccessHandler((data) => {
-        document.getElementById('totalCedulasDia').textContent = data.totalCedulasDia;
-        document.getElementById('totalReservistas').textContent = data.totalReservistas;
-        document.getElementById('totalAnalistas').textContent = data.totalAnalistas;
-        document.getElementById('totalDias').textContent = data.totalDias;
-      })
-      .obtenerEstadisticasOperador();
-  }
-  
-  function buscarReservista() {
-    const cedula = document.getElementById('buscarCedula').value.trim();
-    if (!cedula) return;
-    
-    google.script.run
-      .withSuccessHandler((resultados) => {
-        const contenedor = document.getElementById('resultadosBusqueda');
-        if (resultados.length > 0) {
-          contenedor.innerHTML = resultados.map(r => `
-            <div class="resultado-item">
-              <strong>Año:</strong> ${r.anio}<br>
-              <strong>Libro:</strong> ${r.libro}<br>
-              <strong>Unidad R:</strong> ${r.unidadR}<br>
-              <strong>Archivo:</strong> ${r.archivo}<br>
-              <strong>Fecha registro:</strong> ${r.fechaRegistro}
+    <div class="container">
+        <div id="pantallaInicio" class="access-cards">
+            <div class="card card-analista" id="btnAnalista">
+                <h2>📱 ANALISTA</h2>
+                <p>Registra tu digitalización diaria</p>
+                <button>Ingresar</button>
             </div>
-          `).join('');
-        } else {
-          contenedor.innerHTML = '<div class="resultado-item">No se encontraron registros</div>';
+            <div class="card card-operador" id="btnOperador">
+                <h2>👨‍💼 OPERADOR PRINCIPAL</h2>
+                <p>Control y generación de informes</p>
+                <button>Acceder</button>
+            </div>
+        </div>
+
+        <div id="panelAnalista" class="panel">
+            <div class="header-panel">
+                <h2>📝 REGISTRO PARA ANALISTAS</h2>
+                <button class="btn-volver" id="volverAnalista">← Volver</button>
+            </div>
+            <div class="form-analista">
+                <form id="formAnalista">
+                    <div class="form-group"><label>📅 Fecha:</label><input type="date" id="fechaAnalista" required></div>
+                    <div class="form-group"><label>🆔 Tu cédula:</label><input type="text" id="cedulaAnalista" placeholder="Ej: 12345678" required></div>
+                    <div class="form-group"><label>🏢 Unidad:</label><select id="unidadAnalista" required><option value="">-- Seleccione --</option></select></div>
+                    <div class="form-group campo-nueva-unidad" id="campoNuevaUnidad"><label>✏️ Nueva unidad:</label><input type="text" id="nuevaUnidadTexto" placeholder="Ej: 100 BRIGADA"></div>
+                    <div class="form-group"><label>📖 Año del Libro:</label><input type="text" id="libroAnalista" placeholder="Ej: 1983" maxlength="4" required></div>
+                    <div class="form-group"><label>🔢 Cédulas HOY:</label>
+                        <input type="number" id="cedulasAnalista" placeholder="Cantidad" min="1" step="1" required
+                               onkeydown="if(event.key === '-' || event.key === 'e') event.preventDefault()">
+                    </div>
+                    <div class="form-group"><label>📝 Observaciones:</label><input type="text" id="observacionesAnalista" placeholder="Ninguna"></div>
+                    <button type="submit">✅ ENVIAR REGISTRO</button>
+                </form>
+                <div id="mensajeAnalista"></div>
+            </div>
+            <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px;">
+                <strong>📌 Instrucciones:</strong><br>
+                • Registre solo el trabajo de hoy<br>
+                • En caso de dudas, comuníquese con el Cnel. César Augusto Ontivero Pérez
+            </div>
+        </div>
+
+        <div id="panelOperador" class="panel">
+            <div class="header-panel">
+                <h2>🔐 OPERADOR PRINCIPAL</h2>
+                <button class="btn-volver" id="volverOperador">← Volver</button>
+            </div>
+            <div id="passwordOperador" class="password-area">
+                <h3>🔒 Acceso autorizado</h3>
+                <input type="password" id="claveOperador" placeholder="Clave de acceso">
+                <button id="btnIngresarOperador">Ingresar</button>
+            </div>
+            <div id="contenidoOperador" style="display: none;">
+                <div id="loadingData" class="loading" style="display: none;"><div class="spinner"></div> Cargando datos...</div>
+                <div id="dataContent">
+                    <div class="stats-grid">
+                        <div class="stat-card stat-card-azul">
+                            <div class="stat-number" id="totalHoy">0</div>
+                            <div class="stat-label">📊 CÉDULAS DEL DÍA</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalRegistros">0</div>
+                            <div class="stat-label">📋 REGISTROS TOTALES</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAcumulado">0</div>
+                            <div class="stat-label">💰 CÉDULAS ACUMULADAS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalAnalistas">0</div>
+                            <div class="stat-label">👥 ANALISTAS</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="diasTrabajados">0</div>
+                            <div class="stat-label">📅 DÍAS TRABAJADOS</div>
+                        </div>
+                    </div>
+
+                    <div class="seccion-tabla">
+                        <h4>📋 TODOS LOS REGISTROS (más recientes primero)</h4>
+                        <div class="tabla-container">
+                            <table id="tablaTodosRegistros">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>FECHA</th>
+                                        <th>HORA</th>
+                                        <th>ANALISTA</th>
+                                        <th>UNIDAD</th>
+                                        <th>AÑO</th>
+                                        <th>CÉDULAS</th>
+                                        <th>OBSERVACIONES</th>
+                                        <th>ACCIÓN</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyTodosRegistros"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="seccion-tabla">
+                        <h4>📈 ACUMULADO POR UNIDAD</h4>
+                        <div class="tabla-container">
+                            <table id="tablaAcumulado">
+                                <thead><tr><th>UNIDAD</th><th>TOTAL CÉDULAS</th><th>ANALISTAS</th></tr></thead>
+                                <tbody id="tbodyAcumulado"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <button class="btn-generar-informe" id="btnGenerarInforme">📄 GENERAR INFORME</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURACIÓN ====================
+        const CLAVE_OPERADOR = "R2026";
+        const SCRIPT_URL = google.script.run ? null : "URL_FALLBACK"; // Se usa google.script.run nativo
+        
+        // UNIDADES BASE (mantenidas)
+        const UNIDADES_BASE = [
+            "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
+            "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
+            "31 BRIGADA", "32 BRIGADA", "33 BRIGADA", "35 BRIGADA",
+            "41 BRIGADA", "42 BRIGADA", "43 BRIGADA",
+            "51 BRIGADA", "52 BRIGADA", "53 BRIGADA",
+            "61 BRIGADA", "62 BRIGADA", "63 BRIGADA", "64 BRIGADA",
+            "81 BRIGADA", "82 BRIGADA", "83 BRIGADA",
+            "91 BRIGADA", "92 BRIGADA", "93 BRIGADA", "94 BRIGADA", "99 BRIGADA",
+            "CAVEJB", "COLOG", "6TO CING"
+        ];
+        
+        // ==================== ESTADO EN MEMORIA (OPTIMIZADO) ====================
+        let registros = [];
+        let unidadesSet = new Set(); // Cache de unidades
+        let loadingInicial = false;
+        
+        // ==================== FUNCIONES AUXILIARES ====================
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        
+        function getFechaHoy() {
+            const d = new Date();
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
         }
-      })
-      .buscarCedulaReservista(cedula);
-  }
-</script>
+        
+        function getHoraLocal() {
+            const d = new Date();
+            return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        }
+        
+        function normalizarFecha(fecha) {
+            if (!fecha) return '';
+            const texto = String(fecha).trim();
+            const match = texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+            const matchDMY = texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+            if (matchDMY) return `${matchDMY[3]}-${matchDMY[2]}-${matchDMY[1]}`;
+            return texto;
+        }
+        
+        function formatearFechaVisible(fecha) {
+            const f = normalizarFecha(fecha);
+            if (!f || !/^\d{4}-\d{2}-\d{2}$/.test(f)) return '---';
+            const [y, m, d] = f.split('-');
+            return `${d}/${m}/${y}`;
+        }
+        
+        function formatearHoraVisible(hora) {
+            if (!hora) return '00:00:00';
+            const h = String(hora).trim();
+            if (/^\d{2}:\d{2}:\d{2}$/.test(h)) return h;
+            const match = h.match(/(\d{2}):(\d{2})/);
+            if (match) return `${match[1]}:${match[2]}:00`;
+            return '00:00:00';
+        }
+        
+        // ==================== OPTIMIZACIÓN CLAVE: Actualización eficiente de unidades ====================
+        function actualizarSetUnidades() {
+            unidadesSet.clear();
+            UNIDADES_BASE.forEach(u => unidadesSet.add(u));
+            registros.forEach(r => {
+                if (r.unidad) unidadesSet.add(r.unidad);
+            });
+        }
+        
+        function obtenerUnidadesOrdenadas() {
+            return Array.from(unidadesSet).sort();
+        }
+        
+        function actualizarSelectUnidad() {
+            const select = document.getElementById('unidadAnalista');
+            if (!select) return;
+            const unidades = obtenerUnidadesOrdenadas();
+            const valorActual = select.value;
+            select.innerHTML = '<option value="">-- Seleccione --</option>';
+            unidades.forEach(u => {
+                const opt = document.createElement('option');
+                opt.value = u;
+                opt.textContent = u;
+                select.appendChild(opt);
+            });
+            select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
+            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) select.value = valorActual;
+            
+            const campoNueva = document.getElementById('campoNuevaUnidad');
+            if (select.value === "OTRA_UNIDAD") campoNueva.classList.add('visible');
+            else { campoNueva.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
+        }
+        
+        // ==================== CARGA DE DATOS OPTIMIZADA ====================
+        function cargarDatos() {
+            if (loadingInicial) return;
+            loadingInicial = true;
+            
+            google.script.run
+                .withSuccessHandler(function(datos) {
+                    registros = datos || [];
+                    actualizarSetUnidades();
+                    actualizarSelectUnidad();
+                    actualizarPaneles();
+                    loadingInicial = false;
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Error cargando:', error);
+                    loadingInicial = false;
+                })
+                .obtenerRegistros();
+        }
+        
+        // ==================== GUARDADO OPTIMIZADO ====================
+        function guardarRegistro(nuevoRegistro) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler(function(resultado) {
+                        if (resultado && resultado.success) {
+                            resolve(true);
+                        } else {
+                            reject(false);
+                        }
+                    })
+                    .withFailureHandler(function() {
+                        reject(false);
+                    })
+                    .doPost({ postData: { contents: JSON.stringify(nuevoRegistro) } });
+            });
+        }
+        
+        // ==================== ACTUALIZACIÓN DE PANELES (OPTIMIZADA) ====================
+        function totalDeFecha(fecha) {
+            const fechaNorm = normalizarFecha(fecha);
+            let total = 0;
+            for (let i = 0; i < registros.length; i++) {
+                if (normalizarFecha(registros[i].fecha) === fechaNorm) {
+                    total += parseInt(registros[i].cedulas) || 0;
+                }
+            }
+            return total;
+        }
+        
+        function getNumeroReporte() {
+            const fechasUnicas = [];
+            const hoy = getFechaHoy();
+            for (let i = 0; i < registros.length; i++) {
+                const f = normalizarFecha(registros[i].fecha);
+                if (f && !fechasUnicas.includes(f)) fechasUnicas.push(f);
+            }
+            fechasUnicas.sort();
+            const index = fechasUnicas.indexOf(hoy);
+            return index !== -1 ? index + 1 : fechasUnicas.length + 1;
+        }
+        
+        function actualizarPaneles() {
+            // Estadísticas
+            const hoy = getFechaHoy();
+            const totalHoy = totalDeFecha(hoy);
+            let totalCedulas = 0;
+            const acumulado = {};
+            const analistasPorUnidad = {};
+            const analistasSet = new Set();
+            
+            for (let i = 0; i < registros.length; i++) {
+                const r = registros[i];
+                const ced = parseInt(r.cedulas) || 0;
+                totalCedulas += ced;
+                const u = r.unidad || 'SIN UNIDAD';
+                acumulado[u] = (acumulado[u] || 0) + ced;
+                if (!analistasPorUnidad[u]) analistasPorUnidad[u] = new Set();
+                if (r.cedulaAnalista) {
+                    const cedulaStr = String(r.cedulaAnalista).trim();
+                    analistasPorUnidad[u].add(cedulaStr);
+                    analistasSet.add(cedulaStr);
+                }
+            }
+            
+            const diasSet = new Set();
+            for (let i = 0; i < registros.length; i++) {
+                const f = normalizarFecha(registros[i].fecha);
+                if (f) diasSet.add(f);
+            }
+            
+            document.getElementById('totalHoy').innerText = totalHoy;
+            document.getElementById('totalRegistros').innerText = registros.length;
+            document.getElementById('totalAcumulado').innerText = totalCedulas;
+            document.getElementById('totalAnalistas').innerText = analistasSet.size;
+            document.getElementById('diasTrabajados').innerText = diasSet.size;
+            
+            // Tabla de registros (optimizada: construir HTML directamente)
+            const tbodyTodos = document.getElementById('tbodyTodosRegistros');
+            if (tbodyTodos) {
+                if (registros.length === 0) {
+                    tbodyTodos.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ Sin datos<\/td><\/tr>';
+                } else {
+                    let html = '';
+                    for (let i = registros.length - 1; i >= 0; i--) {
+                        const r = registros[i];
+                        const fechaForm = formatearFechaVisible(r.fecha);
+                        const horaForm = formatearHoraVisible(r.hora);
+                        html += `<tr>
+                            <td>${registros.length - i}<\/td>
+                            <td><strong>${fechaForm}<\/strong><\/td>
+                            <td>${horaForm}<\/td>
+                            <td><span class="badge-analista">${r.cedulaAnalista || 'N/A'}<\/span><\/td>
+                            <td>${r.unidad || 'N/A'}<\/td>
+                            <td>${r.libro || 'N/A'}<\/td>
+                            <td><strong>${parseInt(r.cedulas) || 0}<\/strong><\/td>
+                            <td>${r.observaciones || 'Ninguna'}<\/td>
+                            <td>
+                                <button class="btn-accion btn-editar" onclick="editarRegistro(${i})">✏️<\/button>
+                                <button class="btn-accion btn-eliminar" onclick="eliminarRegistro(${i})">🗑️<\/button>
+                            <\/td>
+                        <\/tr>`;
+                    }
+                    tbodyTodos.innerHTML = html;
+                }
+            }
+            
+            // Tabla acumulado por unidad
+            const tbodyAcum = document.getElementById('tbodyAcumulado');
+            if (tbodyAcum) {
+                const unidades = Object.keys(acumulado).sort();
+                if (unidades.length === 0) {
+                    tbodyAcum.innerHTML = '<tr><td colspan="3" style="text-align:center">⚠️ Sin datos<\/td><\/tr>';
+                } else {
+                    let html = '';
+                    for (let i = 0; i < unidades.length; i++) {
+                        const u = unidades[i];
+                        html += `<tr>
+                            <td>${u}<\/td>
+                            <td><strong>${acumulado[u]}<\/strong><\/td>
+                            <td>${analistasPorUnidad[u].size} analista(s)<\/td>
+                        <\/tr>`;
+                    }
+                    tbodyAcum.innerHTML = html;
+                }
+            }
+        }
+        
+        // ==================== MANEJADORES DE EVENTOS ====================
+        window.eliminarRegistro = function(index) {
+            if (confirm('¿Eliminar este registro permanentemente?')) {
+                registros.splice(index, 1);
+                actualizarSetUnidades();
+                actualizarSelectUnidad();
+                actualizarPaneles();
+                alert('✅ Registro eliminado');
+            }
+        };
+        
+        window.editarRegistro = function(index) {
+            const r = registros[index];
+            const nuevaCedula = prompt('Editar cédula del analista:', r.cedulaAnalista);
+            if (!nuevaCedula) return;
+            const nuevaUnidad = prompt('Editar unidad:', r.unidad);
+            if (!nuevaUnidad) return;
+            const nuevoLibro = prompt('Editar año del libro:', r.libro);
+            if (!nuevoLibro) return;
+            let nuevasCedulas = prompt('Editar cantidad de cédulas (positivo):', r.cedulas);
+            if (!nuevasCedulas) return;
+            nuevasCedulas = parseInt(nuevasCedulas);
+            if (isNaN(nuevasCedulas) || nuevasCedulas <= 0) {
+                alert('La cantidad debe ser un número positivo');
+                return;
+            }
+            const nuevasObs = prompt('Editar observaciones:', r.observaciones || 'Ninguna');
+            
+            registros[index] = {
+                fecha: r.fecha,
+                cedulaAnalista: nuevaCedula,
+                unidad: nuevaUnidad,
+                libro: nuevoLibro,
+                cedulas: nuevasCedulas,
+                observaciones: nuevasObs || 'Ninguna',
+                hora: r.hora || getHoraLocal()
+            };
+            
+            actualizarSetUnidades();
+            actualizarSelectUnidad();
+            actualizarPaneles();
+            alert('✅ Registro editado');
+        };
+        
+        function mostrarAnalista() {
+            document.getElementById('pantallaInicio').style.display = 'none';
+            document.getElementById('panelAnalista').classList.add('panel-activo');
+            document.getElementById('fechaAnalista').value = getFechaHoy();
+            document.getElementById('cedulaAnalista').value = '';
+            document.getElementById('unidadAnalista').value = '';
+            document.getElementById('nuevaUnidadTexto').value = '';
+            document.getElementById('libroAnalista').value = '';
+            document.getElementById('cedulasAnalista').value = '';
+            document.getElementById('observacionesAnalista').value = '';
+            document.getElementById('campoNuevaUnidad').classList.remove('visible');
+            actualizarSelectUnidad();
+        }
+        
+        function mostrarOperador() {
+            document.getElementById('pantallaInicio').style.display = 'none';
+            document.getElementById('panelOperador').classList.add('panel-activo');
+            document.getElementById('passwordOperador').style.display = 'block';
+            document.getElementById('contenidoOperador').style.display = 'none';
+            document.getElementById('claveOperador').value = '';
+        }
+        
+        function volverInicio() {
+            document.getElementById('pantallaInicio').style.display = 'flex';
+            document.getElementById('panelAnalista').classList.remove('panel-activo');
+            document.getElementById('panelOperador').classList.remove('panel-activo');
+        }
+        
+        function ingresarOperador() {
+            if (document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
+                document.getElementById('passwordOperador').style.display = 'none';
+                document.getElementById('contenidoOperador').style.display = 'block';
+                cargarDatos();
+            } else alert('❌ Clave incorrecta');
+        }
+        
+        function generarInforme() {
+            const fechaCorta = formatearFechaVisible(getFechaHoy());
+            const hoy = getFechaHoy();
+            const totalHoy = totalDeFecha(hoy);
+            
+            let totalAcum = 0;
+            const unidades = new Set(), analistas = new Set(), detalle = {};
+            
+            for (let i = 0; i < registros.length; i++) {
+                const r = registros[i];
+                const ced = parseInt(r.cedulas) || 0;
+                totalAcum += ced;
+                if (r.unidad) unidades.add(r.unidad);
+                if (r.cedulaAnalista) analistas.add(String(r.cedulaAnalista).trim());
+                const u = r.unidad || 'SIN UNIDAD';
+                detalle[u] = (detalle[u] || 0) + ced;
+            }
+            
+            const diasSet = new Set();
+            for (let i = 0; i < registros.length; i++) {
+                const f = normalizarFecha(registros[i].fecha);
+                if (f) diasSet.add(f);
+            }
+            
+            const numeroReporte = getNumeroReporte();
+            
+            const win = window.open();
+            win.document.write(`<!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width,initial-scale=1">
+                <title>Informe Digitalización</title>
+                <style>
+                    body{font-family:system-ui;background:#f0f2f5;padding:16px;margin:0}
+                    .informe{max-width:600px;margin:0 auto;background:white;border-radius:28px;padding:24px}
+                    .header{text-align:center}
+                    .fecha-informe{background:#eef2ff;display:inline-block;padding:6px 16px;border-radius:40px;margin-top:12px}
+                    .resumen{background:#fff7ed;border-left:6px solid #ff9800;padding:18px;border-radius:20px;margin:20px 0}
+                    .numero-grande{font-size:34px;font-weight:800;color:#ff9800}
+                    .indicadores{background:#f8f9fa;border-radius:20px;padding:16px;display:flex;gap:12px;flex-wrap:wrap}
+                    .indicador{flex:1;text-align:center;background:white;padding:12px;border-radius:16px}
+                    .indicador-valor{font-size:26px;font-weight:800;color:#1e3c72}
+                    th{background:#1e3c72;color:white;padding:12px}
+                    td{padding:10px;border-bottom:1px solid #eee}
+                </style>
+            </head>
+            <body>
+                <div class="informe">
+                    <div class="header">
+                        <h1>📊 INFORME PERIÓDICO DEL AVANCE</h1>
+                        <h2>Jornada de Digitalización de la Reserva Militar</h2>
+                        <div class="fecha-informe">📅 ${fechaCorta}</div>
+                    </div>
+                    <div class="resumen">
+                        <p>🔹 <strong>RESUMEN EJECUTIVO</strong></p>
+                        <p>Para la fecha <strong>${fechaCorta}</strong>, se han procesado <span class="numero-grande">${totalAcum.toLocaleString()}</span> cédulas en total, de las cuales hoy fueron <span class="numero-grande">${totalHoy.toLocaleString()}</span>.</p>
+                    </div>
+                    <div class="indicadores">
+                        <div class="indicador"><div class="indicador-valor">${unidades.size}</div><div>UNIDADES</div></div>
+                        <div class="indicador"><div class="indicador-valor">${analistas.size}</div><div>ANALISTAS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${diasSet.size}</div><div>DÍAS TRABAJADOS</div></div>
+                        <div class="indicador"><div class="indicador-valor">${numeroReporte}</div><div>REPORTE N° ${numeroReporte}</div></div>
+                    </div>
+                    <h4>📋 Detalle por Unidad</h4>
+                    <table style="width:100%">
+                        <thead><tr><th>Unidad</th><th>Total Cédulas</th></tr></thead>
+                        <tbody>${Object.keys(detalle).sort().map(u => `<tr><td>${u}</td><td><strong>${detalle[u].toLocaleString()}</strong></td><\/tr>`).join('')}</tbody>
+                    </table>
+                    <div class="footer" style="text-align:center;font-size:11px;color:#999;margin-top:20px"><p>${new Date().toLocaleString()}</p></div>
+                </div>
+                <script>setTimeout(()=>window.print(),500);<\/script>
+            </body>
+            </html>`);
+            win.document.close();
+        }
+        
+        // ==================== EVENT LISTENERS ====================
+        document.getElementById('btnAnalista').addEventListener('click', mostrarAnalista);
+        document.getElementById('btnOperador').addEventListener('click', mostrarOperador);
+        document.getElementById('volverAnalista').addEventListener('click', volverInicio);
+        document.getElementById('volverOperador').addEventListener('click', volverInicio);
+        document.getElementById('btnIngresarOperador').addEventListener('click', ingresarOperador);
+        document.getElementById('btnGenerarInforme').addEventListener('click', generarInforme);
+        
+        document.getElementById('unidadAnalista').addEventListener('change', function() {
+            const campo = document.getElementById('campoNuevaUnidad');
+            if (this.value === "OTRA_UNIDAD") campo.classList.add('visible');
+            else { campo.classList.remove('visible'); document.getElementById('nuevaUnidadTexto').value = ''; }
+        });
+        
+        document.getElementById('formAnalista').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fecha = document.getElementById('fechaAnalista').value;
+            const cedula = document.getElementById('cedulaAnalista').value.trim();
+            let unidad = document.getElementById('unidadAnalista').value;
+            const nuevaUnidad = document.getElementById('nuevaUnidadTexto').value.trim().toUpperCase();
+            let cedulas = parseInt(document.getElementById('cedulasAnalista').value);
+            const libro = document.getElementById('libroAnalista').value.trim();
+            const obs = document.getElementById('observacionesAnalista').value.trim() || 'Ninguna';
+            const hora = getHoraLocal();
+            
+            if (isNaN(cedulas) || cedulas <= 0) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Las cédulas deben ser un número positivo mayor a cero</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
+                return;
+            }
+            
+            if (libro && !/^\d{4}$/.test(libro)) {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ El año debe tener 4 dígitos</div>';
+                setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 2000);
+                return;
+            }
+            
+            let unidadFinal = "";
+            if (unidad === "OTRA_UNIDAD") {
+                if (!nuevaUnidad) { 
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de la nueva unidad</div>'; 
+                    setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                    return; 
+                }
+                unidadFinal = nuevaUnidad;
+            } else { 
+                unidadFinal = unidad; 
+                if (!unidadFinal) { 
+                    document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Seleccione una unidad</div>'; 
+                    setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                    return; 
+                } 
+            }
+            
+            if (!fecha || !cedula || !unidadFinal || !libro || !cedulas) { 
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>'; 
+                setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                return; 
+            }
+            
+            if (!/^\d+$/.test(cedula)) { 
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>'; 
+                setTimeout(()=>document.getElementById('mensajeAnalista').innerHTML='',2000); 
+                return; 
+            }
+            
+            document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">⏳ Enviando...</div>';
+            
+            const nuevoRegistro = { fecha, cedulaAnalista: cedula, unidad: unidadFinal, libro, cedulas, observaciones: obs, hora };
+            
+            const exito = await guardarRegistro(nuevoRegistro);
+            
+            if (exito) {
+                // Agregar localmente y actualizar
+                nuevoRegistro.fecha = fecha;
+                nuevoRegistro.cedulaAnalista = cedula;
+                nuevoRegistro.unidad = unidadFinal;
+                nuevoRegistro.libro = libro;
+                nuevoRegistro.cedulas = cedulas;
+                nuevoRegistro.observaciones = obs;
+                nuevoRegistro.hora = hora;
+                registros.push(nuevoRegistro);
+                actualizarSetUnidades();
+                actualizarSelectUnidad();
+                actualizarPaneles();
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-exito">✅ ¡Registro guardado en la nube!</div>';
+                
+                document.getElementById('cedulaAnalista').value = '';
+                document.getElementById('unidadAnalista').value = '';
+                document.getElementById('nuevaUnidadTexto').value = '';
+                document.getElementById('libroAnalista').value = '';
+                document.getElementById('cedulasAnalista').value = '';
+                document.getElementById('observacionesAnalista').value = '';
+                document.getElementById('campoNuevaUnidad').classList.remove('visible');
+            } else {
+                document.getElementById('mensajeAnalista').innerHTML = '<div class="mensaje-error">⚠️ Error. Intente nuevamente.</div>';
+            }
+            
+            setTimeout(() => document.getElementById('mensajeAnalista').innerHTML = '', 3000);
+        });
+        
+        // Inicializar
+        actualizarSelectUnidad();
+    </script>
 </body>
 </html>
