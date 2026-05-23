@@ -1,741 +1,192 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Jornada de Digitalización - Reserva Militar</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 16px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        .access-cards { display: flex; gap: 20px; justify-content: center; align-items: center; min-height: 85vh; flex-wrap: wrap; }
-        .card { background: white; border-radius: 24px; padding: 40px 30px; text-align: center; cursor: pointer; transition: 0.3s; flex: 1; min-width: 260px; max-width: 350px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .card:hover { transform: translateY(-8px); }
-        .card-analista { border-top: 8px solid #4CAF50; }
-        .card-operador { border-top: 8px solid #FF9800; }
-        .card h2 { margin-bottom: 12px; color: #1e3c72; font-size: 26px; }
-        .card p { color: #555; margin-bottom: 20px; }
-        .card button { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; border: none; padding: 12px 30px; border-radius: 40px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; }
-        .panel { background: white; border-radius: 24px; padding: 20px; display: none; }
-        .panel-activo { display: block; }
-        .header-panel { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0; flex-wrap: wrap; gap: 12px; }
-        .header-panel h2 { color: #1e3c72; font-size: 20px; }
-        .btn-volver { background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 20px; cursor: pointer; }
-        .form-analista { background: #f8f9fa; padding: 20px; border-radius: 16px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #1e3c72; }
-        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; font-size: 16px; }
-        button[type="submit"] { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 14px; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; }
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 25px; }
-        .stat-card { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 16px; border-radius: 16px; text-align: center; }
-        .stat-card-azul { background: linear-gradient(135deg, #2196F3 0%, #0b5e9e 100%); }
-        .stat-number { font-size: 28px; font-weight: bold; }
-        .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
-        .buscador { background: #f8f9fa; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-        .buscador label { font-weight: 600; color: #1e3c72; }
-        .buscador input { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; font-size: 14px; }
-        .buscador button { background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; }
-        .resultado-busqueda { background: #e8f5e9; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: none; }
-        .resultado-busqueda h4 { color: #2e7d32; margin-bottom: 10px; }
-        .resultado-item { background: white; border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #4CAF50; font-size: 14px; }
-        .filtro-unidad { background: #f8f9fa; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
-        .filtro-unidad label { font-weight: 600; color: #1e3c72; }
-        .filtro-unidad select { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; }
-        .filtro-unidad button { background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; }
-        .seccion-tabla { margin-bottom: 25px; }
-        .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
-        .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #1e3c72; color: white; position: sticky; top: 0; white-space: nowrap; }
-        td { white-space: nowrap; }
-        .btn-accion { border: none; padding: 5px 10px; border-radius: 12px; cursor: pointer; font-size: 11px; margin: 0 2px; }
-        .btn-eliminar { background: #dc3545; color: white; }
-        .btn-eliminar-lote { background: #28a745; color: white; margin-top: 10px; padding: 12px; border-radius: 12px; border: none; font-weight: bold; width: 100%; cursor: pointer; }
-        .password-area { text-align: center; padding: 30px 20px; }
-        .password-area input { padding: 14px; width: 100%; max-width: 280px; margin: 15px 0; border: 1px solid #ddd; border-radius: 12px; font-size: 16px; text-align: center; }
-        .mensaje-exito { background: #d4edda; color: #155724; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
-        .mensaje-error { background: #f8d7da; color: #721c24; padding: 12px; border-radius: 12px; margin-top: 15px; text-align: center; }
-        .campo-nueva-unidad { display: none; }
-        .campo-nueva-unidad.visible { display: block; }
-        .badge-analista { background: #e9ecef; border-radius: 12px; padding: 2px 8px; font-size: 11px; color: #495057; display: inline-block; }
-        .loading { text-align: center; padding: 20px; color: #666; }
-        .spinner { display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #1e3c72; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .lote-actual { background: #e3f2fd; border-radius: 16px; padding: 15px; margin-bottom: 20px; }
-        .lote-actual h4 { color: #1e3c72; margin-bottom: 10px; }
-        .lote-info { font-size: 14px; margin-bottom: 10px; }
-        .tabla-lote { margin-top: 15px; overflow-x: auto; max-height: 300px; overflow-y: auto; }
-        .tabla-lote table { font-size: 12px; width: 100%; }
-        .tabla-lote th, .tabla-lote td { padding: 5px; }
-        .mis-registros { background: #e8f5e9; border-radius: 16px; padding: 15px; margin-top: 20px; }
-        .mis-registros h4 { color: #2e7d32; margin-bottom: 10px; }
-        @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .stat-number { font-size: 24px; } th, td { font-size: 11px; padding: 6px 4px; } .btn-accion { padding: 3px 6px; font-size: 10px; } }
-    </style>
+  <base target="_top">
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', monospace; }
+    body { background: #f0f2f5; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: #1e3a5f; color: white; padding: 20px 24px; font-size: 20px; font-weight: bold; }
+    .lote-actual { padding: 24px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+    .campo { margin-bottom: 16px; }
+    .campo label { display: block; font-weight: 600; margin-bottom: 6px; color: #1e3a5f; }
+    .campo input, .campo select { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 14px; }
+    .boton-agregar { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
+    .boton-agregar:hover { background: #218838; }
+    .actividad { padding: 16px 24px; background: #e9ecef; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dee2e6; }
+    .actividad span:first-child { font-weight: 600; }
+    .actividad span:last-child { font-size: 28px; font-weight: bold; color: #1e3a5f; }
+    .tabla-wrapper { padding: 24px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th { background: #1e3a5f; color: white; padding: 12px; text-align: left; }
+    td { padding: 10px 12px; border-bottom: 1px solid #dee2e6; }
+    .status { position: fixed; bottom: 20px; right: 20px; background: #1e3a5f; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div id="pantallaInicio" class="access-cards">
-            <div class="card card-analista" id="btnAnalista">
-                <h2>📱 ANALISTA</h2>
-                <p>Registra tu digitalización diaria</p>
-                <button>Ingresar</button>
-            </div>
-            <div class="card card-operador" id="btnOperador">
-                <h2>👨‍💼 OPERADOR PRINCIPAL</h2>
-                <p>Control y generación de informes</p>
-                <button>Acceder</button>
-            </div>
-        </div>
-
-        <div id="panelAnalista" class="panel">
-            <div class="header-panel">
-                <h2>📝 REGISTRO PARA ANALISTAS</h2>
-                <button class="btn-volver" id="volverAnalista">← Volver</button>
-            </div>
-            
-            <div class="form-analista" id="formularioAnalista">
-                <h3 style="margin-bottom: 15px;">🔐 1. TUS DATOS (una sola vez)</h3>
-                <form id="formDatosAnalista">
-                    <div class="form-group">
-                        <label>🆔 Tu cédula:</label>
-                        <input type="text" id="cedulaAnalistaPrincipal" placeholder="Ej: 12345678" required>
-                    </div>
-                    <div class="form-group">
-                        <label>🏢 Tu unidad:</label>
-                        <select id="unidadAnalistaPrincipal" required>
-                            <option value="">-- Seleccione --</option>
-                        </select>
-                    </div>
-                    <div class="form-group campo-nueva-unidad" id="campoNuevaUnidadPrincipal">
-                        <label>✏️ Nueva unidad (si no está en la lista):</label>
-                        <input type="text" id="nuevaUnidadPrincipal" placeholder="Ej: 100 BRIGADA">
-                    </div>
-                    <button type="submit" id="btnIniciarSesion">🚀 INICIAR CARGA</button>
-                </form>
-                <div id="mensajeAnalistaSesion"></div>
-            </div>
-            
-            <div id="formularioCarga" style="display: none;">
-                <div class="lote-actual">
-                    <h4>📋 LOTE ACTUAL</h4>
-                    <div class="lote-info">
-                        <strong>Analista:</strong> <span id="mostrarCedulaAnalista"></span> - 
-                        <strong>Unidad:</strong> <span id="mostrarUnidadAnalista"></span>
-                    </div>
-                    <div class="form-analista" style="margin-top: 10px;">
-                        <form id="formReservista">
-                            <div class="form-group">
-                                <label>📖 Libro (año que estás digitalizando):</label>
-                                <input type="text" id="libroReservista" placeholder="Ej: 1975" maxlength="4" required>
-                            </div>
-                            <div class="form-group">
-                                <label>🏢 Unidad del reservista:</label>
-                                <input type="text" id="unidadRReservista" placeholder="Ej: 11 BRIGADA" required>
-                            </div>
-                            <div class="form-group">
-                                <label>🆔 Cédula(s) del reservista (separadas por coma):</label>
-                                <input type="text" id="cedulaRReservista" placeholder="Ej: 11526483, 12827266" required>
-                                <small style="color: #666;">Puedes escribir varias cédulas separadas por coma</small>
-                            </div>
-                            <button type="submit">➕ AGREGAR RESERVISTA(S) AL LOTE</button>
-                        </form>
-                    </div>
-                    <div id="mensajeReservista"></div>
-                </div>
-                
-                <div id="resumenLote" style="display: none;">
-                    <h4>📊 RESERVISTAS EN ESTE LOTE</h4>
-                    <div class="tabla-lote">
-                        <table>
-                            <thead>
-                                <tr><th>#</th><th>CÉDULA</th><th>UNIDAD_R</th><th>LIBRO</th><th>DESDE</th><th>ACCIÓN</th></tr>
-                            </thead>
-                            <tbody id="tbodyLoteActual"></tbody>
-                        </table>
-                    </div>
-                    <div style="margin-top: 10px; text-align: right;">
-                        <strong>Total cédulas en lote: <span id="totalLote">0</span></strong>
-                    </div>
-                    <button id="btnConfirmarLote" class="btn-eliminar-lote">✅ CONFIRMAR Y ENVIAR LOTE</button>
-                    <button id="btnCancelarLote" style="background: #6c757d; margin-top: 10px; color: white; border: none; padding: 10px; border-radius: 12px; width: 100%; cursor: pointer;">🗑️ CANCELAR LOTE</button>
-                </div>
-                
-                <div id="misRegistros" class="mis-registros" style="display: none;">
-                    <h4>📊 MI ACTIVIDAD</h4>
-                    <div style="background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; text-align: center;">
-                        <div style="font-size: 32px; font-weight: bold; color: #2e7d32;" id="totalGeneralAnalista">0</div>
-                        <div style="font-size: 14px; color: #666;">Total de cédulas digitalizadas por usted</div>
-                    </div>
-                    <h4>📋 DESGLOSE POR AÑO Y UNIDAD</h4>
-                    <div class="tabla-container">
-                        <table style="width: 100%;">
-                            <thead>
-                                <tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr>
-                            </thead>
-                            <tbody id="tbodyMisRegistros"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="background: #e3f2fd; padding: 15px; border-radius: 12px; font-size: 13px; margin-top: 15px;">
-                <strong>📌 Instrucciones:</strong><br>
-                • Primero ingresa tus datos (cédula y unidad)<br>
-                • Si tu unidad no está en la lista, escríbela en "Nueva unidad"<br>
-                • Luego, por cada lote: escribe el libro, la unidad del reservista y las cédulas separadas por coma<br>
-                • Las cédulas se van acumulando en el lote actual<br>
-                • Cuando termines un lote, haz clic en "CONFIRMAR Y ENVIAR LOTE"
-            </div>
-        </div>
-
-        <div id="panelOperador" class="panel">
-            <div class="header-panel">
-                <h2>🔐 OPERADOR PRINCIPAL</h2>
-                <button class="btn-volver" id="volverOperador">← Volver</button>
-            </div>
-            <div id="passwordOperador" class="password-area">
-                <h3>🔒 Acceso autorizado</h3>
-                <input type="password" id="claveOperador" placeholder="Clave de acceso">
-                <button id="btnIngresarOperador" style="background: #1e3c72; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer;">Ingresar</button>
-            </div>
-            <div id="contenidoOperador" style="display: none;">
-                <div id="loadingData" class="loading" style="display: none;"><div class="spinner"></div> Cargando datos...</div>
-                <div id="dataContent">
-                    <div class="stats-grid">
-                        <div class="stat-card stat-card-azul"><div class="stat-number" id="totalHoy">0</div><div class="stat-label">📊 CÉDULAS DEL DÍA</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalReservistas">0</div><div class="stat-label">👥 RESERVISTAS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="totalAnalistas">0</div><div class="stat-label">👥 ANALISTAS</div></div>
-                        <div class="stat-card"><div class="stat-number" id="diasTrabajados">0</div><div class="stat-label">📅 DÍAS</div></div>
-                    </div>
-
-                    <div class="buscador">
-                        <label>🔍 Buscar cédula de reservista:</label>
-                        <input type="text" id="buscarCedulaInput" placeholder="Ej: 12345678">
-                        <button id="btnBuscarCedula">Buscar</button>
-                    </div>
-
-                    <div id="resultadoBusqueda" class="resultado-busqueda">
-                        <h4>📌 Resultado de la búsqueda</h4>
-                        <div id="resultadoItems"></div>
-                    </div>
-
-                    <div class="filtro-unidad">
-                        <label>🏢 Filtrar por unidad del analista:</label>
-                        <select id="filtroUnidadAnalista"><option value="TODAS">-- TODAS LAS UNIDADES --</option></select>
-                        <button id="btnFiltrarUnidad">🔍 APLICAR FILTRO</button>
-                        <button id="btnLimpiarFiltro" style="background: #6c757d;">🗑️ LIMPIAR FILTRO</button>
-                    </div>
-
-                    <div class="seccion-tabla">
-                        <h4>📋 BASE DE DATOS DE RESERVISTAS</h4>
-                        <div class="tabla-container">
-                            <table id="tablaReservistas">
-                                <thead><tr><th>#</th><th>FECHA</th><th>ANALISTA</th><th>UNIDAD ANALISTA</th><th>LIBRO</th><th>UNIDAD_R</th><th>CÉDULA_R</th><th>DESDE</th><th>ACCIÓN</th></tr></thead>
-                                <tbody id="tbodyReservistas"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <button id="btnGenerarInforme" style="background: #ff9800; color: white; padding: 14px; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px;">📄 GENERAR INFORME</button>
-                </div>
-            </div>
-        </div>
+<div class="container">
+  <div class="header">📋 REGISTRO PARA ANALISTAS</div>
+  
+  <div class="lote-actual">
+    <div class="campo">
+      <label>📖 Año del libro:</label>
+      <input type="number" id="anio" placeholder="Ej: 1975" value="2024">
     </div>
+    <div class="campo">
+      <label>🏢 Unidad del reservista:</label>
+      <input type="text" id="unidad" placeholder="Ej: 11 BRIGADA" value="1RA DIVISION">
+    </div>
+    <div class="campo">
+      <label>🆔 Cédula(s) (separadas por coma):</label>
+      <input type="text" id="cedulas" placeholder="Ej: 11526483, 12827266">
+    </div>
+    <button class="boton-agregar" id="btnAgregar">+ AGREGAR RESERVISTA(S) AL LOTE</button>
+  </div>
+  
+  <div class="actividad">
+    <span>🎯 MI ACTIVIDAD</span>
+    <span id="totalActividad">0</span>
+  </div>
+  
+  <div class="tabla-wrapper">
+    <table id="tablaDesglose">
+      <thead><tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr></thead>
+      <tbody id="tablaBody"></tbody>
+    </table>
+  </div>
+</div>
+<div id="statusMsg" class="status">✅ Guardado</div>
 
-    <script>
-        const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHTrk4aNmlns-R29lghBFmSu1jTLVbXBoAmfopsJi6kf6OIe3-XiLnmycxSIpJVNi6/exec";
+<script>
+  // ESTADO OPTIMIZADO CON INDEX MAP
+  let indexMap = new Map();
+  let totalCedulas = 0;
+  const tbody = document.getElementById('tablaBody');
+  const totalSpan = document.getElementById('totalActividad');
+  const statusDiv = document.getElementById('statusMsg');
+  
+  function mostrarStatus(mensaje, esError = false) {
+    statusDiv.textContent = mensaje;
+    statusDiv.style.background = esError ? '#dc3545' : '#28a745';
+    statusDiv.style.opacity = '1';
+    setTimeout(() => { statusDiv.style.opacity = '0'; }, 2000);
+  }
+  
+  function actualizarTotalUI() {
+    totalSpan.textContent = totalCedulas;
+  }
+  
+  function crearFila(anio, unidad, cantidad) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${anio}</td><td>${unidad}</td><td class="count-cell">${cantidad} cédula${cantidad !== 1 ? 's' : ''}</td>`;
+    return tr;
+  }
+  
+  function actualizarCeldaCount(rowElement, nuevoCount) {
+    const countCell = rowElement.querySelector('.count-cell');
+    if (countCell) countCell.textContent = `${nuevoCount} cédula${nuevoCount !== 1 ? 's' : ''}`;
+  }
+  
+  function revertirCambios(clave, cantidad) {
+    const entrada = indexMap.get(clave);
+    if (entrada) {
+      const nuevoCount = entrada.count - cantidad;
+      if (nuevoCount <= 0) {
+        entrada.rowElement.remove();
+        indexMap.delete(clave);
+      } else {
+        entrada.count = nuevoCount;
+        actualizarCeldaCount(entrada.rowElement, nuevoCount);
+      }
+    }
+    totalCedulas -= cantidad;
+    actualizarTotalUI();
+  }
+  
+  async function agregarReservistas(anio, unidad, listaCedulas) {
+    if (!anio || !unidad || listaCedulas.length === 0) {
+      mostrarStatus('❌ Complete todos los campos', true);
+      return false;
+    }
+    
+    const clave = `${anio}|${unidad}`;
+    const cantidadNueva = listaCedulas.length;
+    
+    // Actualización optimista UI
+    let filaExistente = indexMap.get(clave);
+    if (filaExistente) {
+      filaExistente.count += cantidadNueva;
+      actualizarCeldaCount(filaExistente.rowElement, filaExistente.count);
+    } else {
+      const nuevaFila = crearFila(anio, unidad, cantidadNueva);
+      tbody.appendChild(nuevaFila);
+      indexMap.set(clave, { rowElement: nuevaFila, count: cantidadNueva });
+    }
+    
+    totalCedulas += cantidadNueva;
+    actualizarTotalUI();
+    
+    // Envío a Apps Script
+    try {
+      const result = await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .procesarLote({ anio, unidad, cedulas: listaCedulas });
+      });
+      
+      if (result.success) {
+        mostrarStatus(`✅ +${cantidadNueva} cédula(s) guardadas`);
+      } else {
+        mostrarStatus(`⚠️ Error: ${result.error}`, true);
+        revertirCambios(clave, cantidadNueva);
+      }
+    } catch (error) {
+      mostrarStatus(`❌ Error de red: revertiendo...`, true);
+      revertirCambios(clave, cantidadNueva);
+    }
+    
+    return true;
+  }
+  
+  function cargarDatosIniciales() {
+    google.script.run
+      .withSuccessHandler((data) => {
+        const { resumen, totalGeneral } = data;
+        totalCedulas = totalGeneral;
+        actualizarTotalUI();
         
-        const UNIDADES_BASE = [
-            "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
-            "21 BRIGADA", "22 BRIGADA", "25 BRIGADA",
-            "31 BRIGADA", "32 BRIGADA", "33 BRIGADA", "35 BRIGADA",
-            "41 BRIGADA", "42 BRIGADA", "43 BRIGADA",
-            "51 BRIGADA", "52 BRIGADA", "53 BRIGADA",
-            "61 BRIGADA", "62 BRIGADA", "63 BRIGADA", "64 BRIGADA",
-            "81 BRIGADA", "82 BRIGADA", "83 BRIGADA",
-            "91 BRIGADA", "92 BRIGADA", "93 BRIGADA", "94 BRIGADA", "99 BRIGADA",
-            "CAVEJB", "COLOG", "6TO CING"
-        ];
-        
-        let registrosReservistas = [];
-        let loteActual = [];
-        let datosAnalista = { cedula: "", unidad: "" };
-        let unidadFiltroActual = "TODAS";
-        let cedulaAnalistaActual = "";
-        
-        function pad2(n) { return String(n).padStart(2, '0'); }
-        
-        function getFechaHoy() {
-            const d = new Date();
-            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+        for (const [clave, cantidad] of Object.entries(resumen)) {
+          const [anio, unidad] = clave.split('|');
+          const fila = crearFila(anio, unidad, cantidad);
+          tbody.appendChild(fila);
+          indexMap.set(clave, { rowElement: fila, count: cantidad });
         }
-        
-        function formatearFechaVisible(fechaISO) {
-            if (!fechaISO) return '---';
-            const d = new Date(fechaISO);
-            return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-        }
-        
-        async function cargarDatosDesdeNube() {
-            const loadingDiv = document.getElementById('loadingData');
-            try {
-                if (loadingDiv) loadingDiv.style.display = 'block';
-                const respuesta = await fetch(SCRIPT_URL);
-                const datos = await respuesta.json();
-                registrosReservistas = Array.isArray(datos.reservistas) ? datos.reservistas : [];
-                actualizarSelectFiltroUnidad();
-                actualizarPanelOperador();
-                if (loadingDiv) loadingDiv.style.display = 'none';
-            } catch(e) {
-                console.error('Error:', e);
-                if (loadingDiv) loadingDiv.innerHTML = '⚠️ Error de conexión';
-            }
-        }
-        
-        async function buscarCedulaEnNube(cedula) {
-            try {
-                const respuesta = await fetch(`${SCRIPT_URL}?cedula=${cedula}`);
-                const datos = await respuesta.json();
-                return datos;
-            } catch(e) {
-                console.error('Error:', e);
-                return { encontrado: false, error: e.toString() };
-            }
-        }
-        
-        async function guardarReservistas(reservistas) {
-            try {
-                for (const r of reservistas) {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tipo: "reservista",
-                            timestamp: r.timestamp,
-                            cedula_analista: r.cedula_analista,
-                            unidad_analista: r.unidad_analista,
-                            libro: r.libro,
-                            unidad_r: r.unidad_r,
-                            cedula_r: r.cedula_r,
-                            desde: r.desde
-                        })
-                    });
-                }
-                await cargarDatosDesdeNube();
-                return true;
-            } catch(e) { 
-                console.error('Error guardando:', e);
-                return false; 
-            }
-        }
-        
-        async function cargarMisRegistrosResumen(cedula) {
-            try {
-                const respuesta = await fetch(`${SCRIPT_URL}?mis_registros=${encodeURIComponent(cedula)}`);
-                const datos = await respuesta.json();
-                return datos;
-            } catch(e) {
-                console.error('Error:', e);
-                return { success: false, totalGeneral: 0, registrosPorUnidad: [] };
-            }
-        }
-        
-        function obtenerUnidadesAnalistas() {
-            const unidades = new Set();
-            registrosReservistas.forEach(r => {
-                if (r.unidad_analista) unidades.add(r.unidad_analista);
-            });
-            return Array.from(unidades).sort();
-        }
-        
-        function actualizarSelectFiltroUnidad() {
-            const select = document.getElementById('filtroUnidadAnalista');
-            if (!select) return;
-            const unidades = obtenerUnidadesAnalistas();
-            const valorActual = select.value;
-            select.innerHTML = '<option value="TODAS">-- TODAS LAS UNIDADES --</option>';
-            unidades.forEach(u => {
-                const opt = document.createElement('option');
-                opt.value = u;
-                opt.textContent = u;
-                select.appendChild(opt);
-            });
-            if (valorActual && (valorActual === "TODAS" || unidades.includes(valorActual))) {
-                select.value = valorActual;
-            }
-        }
-        
-        function obtenerRegistrosFiltrados() {
-            if (unidadFiltroActual === "TODAS") return registrosReservistas;
-            return registrosReservistas.filter(r => r.unidad_analista === unidadFiltroActual);
-        }
-        
-        function actualizarPanelOperador() {
-            const hoy = getFechaHoy();
-            const registrosFiltrados = obtenerRegistrosFiltrados();
-            const reservistasHoy = registrosFiltrados.filter(r => r.timestamp && r.timestamp.split('T')[0] === hoy);
-            const analistasSet = new Set();
-            registrosFiltrados.forEach(r => { if (r.cedula_analista) analistasSet.add(r.cedula_analista); });
-            
-            document.getElementById('totalHoy').innerText = reservistasHoy.length;
-            document.getElementById('totalReservistas').innerText = registrosFiltrados.length;
-            document.getElementById('totalAnalistas').innerText = analistasSet.size;
-            document.getElementById('diasTrabajados').innerText = new Set(registrosFiltrados.map(r => r.timestamp ? r.timestamp.split('T')[0] : null).filter(Boolean)).size;
-            
-            const tbody = document.getElementById('tbodyReservistas');
-            if (tbody) {
-                const mostrados = [...registrosFiltrados].reverse();
-                if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
-                } else {
-                    tbody.innerHTML = mostrados.map((r, i) => {
-                        const indiceOriginal = registrosReservistas.indexOf(r);
-                        return `<tr>
-                            <td>${i+1} </div> </div>
-                            <td>${formatearFechaVisible(r.timestamp)}</div> </div>
-                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></div> </div>
-                            <td>${r.unidad_analista || 'N/A'} </div> </div>
-                            <td>${r.libro || 'N/A'} </div> </div>
-                            <td>${r.unidad_r || 'N/A'} </div> </div>
-                            <td><strong>${r.cedula_r || 'N/A'}</strong></div> </div>
-                            <td>${r.desde || 'N/A'} </div> </div>
-                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></div> </div>
-                        </tr>`;
-                    }).join('');
-                }
-            }
-        }
-        
-        async function eliminarReservista(index) {
-            const objetivo = registrosReservistas[index];
-            if (confirm(`¿Eliminar permanentemente al reservista C.I: ${objetivo.cedula_r}?`)) {
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tipo: "eliminar_reservista",
-                            cedula_r: objetivo.cedula_r,
-                            timestamp: objetivo.timestamp
-                        })
-                    });
-                    alert('✅ Registro eliminado');
-                    await cargarDatosDesdeNube();
-                } catch (e) {
-                    alert('❌ Error');
-                }
-            }
-        }
-        
-        function actualizarSelectUnidad(selectId, incluirOtra = true) {
-            const select = document.getElementById(selectId);
-            if (!select) return;
-            
-            let unidades = [...UNIDADES_BASE];
-            registrosReservistas.forEach(r => {
-                if (r.unidad_analista && !unidades.includes(r.unidad_analista)) {
-                    unidades.push(r.unidad_analista);
-                }
-            });
-            unidades = [...new Set(unidades)].sort();
-            
-            const valorActual = select.value;
-            select.innerHTML = '<option value="">-- Seleccione --</option>';
-            unidades.forEach(u => {
-                const opt = document.createElement('option');
-                opt.value = u;
-                opt.textContent = u;
-                select.appendChild(opt);
-            });
-            if (incluirOtra) select.appendChild(new Option("➕ OTRA UNIDAD", "OTRA_UNIDAD"));
-            if (valorActual && (unidades.includes(valorActual) || valorActual === "OTRA_UNIDAD")) select.value = valorActual;
-            
-            const campoNueva = document.getElementById('campoNuevaUnidadPrincipal');
-            if (campoNueva) {
-                if (select.value === "OTRA_UNIDAD") {
-                    campoNueva.classList.add('visible');
-                } else {
-                    campoNueva.classList.remove('visible');
-                    document.getElementById('nuevaUnidadPrincipal').value = '';
-                }
-            }
-        }
-        
-        function actualizarResumenLote() {
-            const tbody = document.getElementById('tbodyLoteActual');
-            if (loteActual.length === 0) {
-                document.getElementById('resumenLote').style.display = 'none';
-                return;
-            }
-            document.getElementById('resumenLote').style.display = 'block';
-            tbody.innerHTML = loteActual.map((r, i) => `
-                <tr>
-                    <td>${i+1} </div> </div>
-                    <td>${r.cedula_r} </div> </div>
-                    <td>${r.unidad_r} </div> </div>
-                    <td>${r.libro} </div> </div>
-                    <td>${r.desde} </div> </div>
-                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></div> </div>
-                </tr>
-            `).join('');
-            document.getElementById('totalLote').innerText = loteActual.length;
-        }
-        
-        window.eliminarDelLote = function(index) {
-            loteActual.splice(index, 1);
-            actualizarResumenLote();
-        }
-        
-        window.eliminarReservista = eliminarReservista;
-        
-        function aplicarFiltro() {
-            unidadFiltroActual = document.getElementById('filtroUnidadAnalista').value;
-            actualizarPanelOperador();
-        }
-        
-        function limpiarFiltro() {
-            unidadFiltroActual = "TODAS";
-            const select = document.getElementById('filtroUnidadAnalista');
-            if (select) select.value = "TODAS";
-            actualizarPanelOperador();
-        }
-
-        document.getElementById('btnAnalista').addEventListener('click', () => {
-            document.getElementById('pantallaInicio').style.display = 'none';
-            document.getElementById('panelAnalista').classList.add('panel-activo');
-            actualizarSelectUnidad('unidadAnalistaPrincipal', true);
-        });
-
-        document.getElementById('unidadAnalistaPrincipal').addEventListener('change', (e) => {
-            const campoNueva = document.getElementById('campoNuevaUnidadPrincipal');
-            if (e.target.value === "OTRA_UNIDAD") {
-                campoNueva.classList.add('visible');
-                document.getElementById('nuevaUnidadPrincipal').required = true;
-            } else {
-                campoNueva.classList.remove('visible');
-                document.getElementById('nuevaUnidadPrincipal').required = false;
-            }
-        });
-
-        document.getElementById('formDatosAnalista').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            let unidad = document.getElementById('unidadAnalistaPrincipal').value;
-            if (unidad === "OTRA_UNIDAD") {
-                unidad = document.getElementById('nuevaUnidadPrincipal').value.toUpperCase().trim();
-                if (!unidad) {
-                    document.getElementById('mensajeAnalistaSesion').innerHTML = '<div class="mensaje-error">❌ Escriba el nombre de su unidad</div>';
-                    setTimeout(() => document.getElementById('mensajeAnalistaSesion').innerHTML = '', 2000);
-                    return;
-                }
-            }
-            const cedula = document.getElementById('cedulaAnalistaPrincipal').value.trim();
-            
-            if (!cedula || !unidad) {
-                document.getElementById('mensajeAnalistaSesion').innerHTML = '<div class="mensaje-error">❌ Complete sus datos</div>';
-                setTimeout(() => document.getElementById('mensajeAnalistaSesion').innerHTML = '', 2000);
-                return;
-            }
-            
-            if (!/^\d+$/.test(cedula)) {
-                document.getElementById('mensajeAnalistaSesion').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
-                setTimeout(() => document.getElementById('mensajeAnalistaSesion').innerHTML = '', 2000);
-                return;
-            }
-            
-            datosAnalista = { cedula, unidad };
-            cedulaAnalistaActual = datosAnalista.cedula;
-
-            document.getElementById('mostrarCedulaAnalista').innerText = datosAnalista.cedula;
-            document.getElementById('mostrarUnidadAnalista').innerText = datosAnalista.unidad;
-            
-            document.getElementById('totalGeneralAnalista').innerText = 'Cargando...';
-            document.getElementById('misRegistros').style.display = 'block';
-            
-            const misRegistros = await cargarMisRegistrosResumen(cedulaAnalistaActual);
-            if (misRegistros.success) {
-                document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
-                const tbody = document.getElementById('tbodyMisRegistros');
-                if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
-                    tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
-                        <tr>
-                            <td><strong>${r.año}</strong></td>
-                            <td>${r.unidad_r} </div> </div>
-                            <td>${r.total} cédulas</div> </div>
-                        </tr>
-                    `).join('');
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</div></div></td>';
-                }
-            } else {
-                document.getElementById('totalGeneralAnalista').innerText = '0';
-                document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="3" style="text-align:center">Error al cargar</div></div></tr>';
-            }
-            
-            document.getElementById('formularioAnalista').style.display = 'none';
-            document.getElementById('formularioCarga').style.display = 'block';
-        });
-
-        document.getElementById('formReservista').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const libro = document.getElementById('libroReservista').value.trim();
-            const unidadR = document.getElementById('unidadRReservista').value.toUpperCase().trim();
-            const cedulasRaw = document.getElementById('cedulaRReservista').value;
-            
-            if (!libro || !unidadR || !cedulasRaw) {
-                document.getElementById('mensajeReservista').innerHTML = '<div class="mensaje-error">❌ Complete todos los campos</div>';
-                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
-                return;
-            }
-            
-            if (!/^\d{4}$/.test(libro)) {
-                document.getElementById('mensajeReservista').innerHTML = '<div class="mensaje-error">❌ El libro debe ser un año de 4 dígitos</div>';
-                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
-                return;
-            }
-            
-            const desde = (parseInt(libro) - 2).toString();
-            const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
-            let agregadas = 0;
-            let errores = [];
-            
-            for (const cedula of listaCedulas) {
-                if (!/^\d+$/.test(cedula)) {
-                    errores.push(cedula);
-                    continue;
-                }
-                loteActual.push({
-                    timestamp: new Date().toISOString(),
-                    cedula_analista: datosAnalista.cedula,
-                    unidad_analista: datosAnalista.unidad,
-                    libro: libro,
-                    unidad_r: unidadR,
-                    cedula_r: cedula,
-                    desde: desde
-                });
-                agregadas++;
-            }
-            
-            if (errores.length > 0) {
-                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-error">⚠️ Cédulas inválidas: ${errores.join(', ')}</div>`;
-                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 3000);
-            } else {
-                document.getElementById('mensajeReservista').innerHTML = `<div class="mensaje-exito">✅ ${agregadas} reservista(s) agregado(s)</div>`;
-                setTimeout(() => document.getElementById('mensajeReservista').innerHTML = '', 2000);
-            }
-            
-            document.getElementById('cedulaRReservista').value = '';
-            actualizarResumenLote();
-        });
-
-        document.getElementById('btnConfirmarLote').addEventListener('click', async () => {
-            if (loteActual.length === 0) return;
-            document.getElementById('btnConfirmarLote').disabled = true;
-            document.getElementById('btnConfirmarLote').innerText = '⏳ ENVIANDO...';
-            
-            const exito = await guardarReservistas(loteActual);
-            if (exito) {
-                alert('✅ Lote enviado exitosamente');
-                loteActual = [];
-                actualizarResumenLote();
-                
-                const misRegistros = await cargarMisRegistrosResumen(cedulaAnalistaActual);
-                if (misRegistros.success) {
-                    document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
-                    const tbody = document.getElementById('tbodyMisRegistros');
-                    if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
-                        tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
-                            <tr>
-                                <td><strong>${r.año}</strong></td>
-                                <td>${r.unidad_r} </div> </div>
-                                <td>${r.total} cédulas</div> </div>
-                            </tr>
-                        `).join('');
-                    }
-                }
-            } else {
-                alert('❌ Error al enviar');
-            }
-            document.getElementById('btnConfirmarLote').disabled = false;
-            document.getElementById('btnConfirmarLote').innerText = '✅ CONFIRMAR Y ENVIAR LOTE';
-        });
-
-        document.getElementById('btnCancelarLote').addEventListener('click', () => {
-            if (confirm('¿Vaciar el lote actual?')) {
-                loteActual = [];
-                actualizarResumenLote();
-            }
-        });
-
-        document.getElementById('btnOperador').addEventListener('click', () => {
-            document.getElementById('pantallaInicio').style.display = 'none';
-            document.getElementById('panelOperador').classList.add('panel-activo');
-        });
-
-        document.getElementById('btnIngresarOperador').addEventListener('click', () => {
-            if (document.getElementById('claveOperador').value === CLAVE_OPERADOR) {
-                document.getElementById('passwordOperador').style.display = 'none';
-                document.getElementById('contenidoOperador').style.display = 'block';
-                cargarDatosDesdeNube();
-            } else {
-                alert('❌ Clave incorrecta');
-            }
-        });
-        
-        document.getElementById('btnFiltrarUnidad').addEventListener('click', aplicarFiltro);
-        document.getElementById('btnLimpiarFiltro').addEventListener('click', limpiarFiltro);
-        
-        document.getElementById('btnBuscarCedula').addEventListener('click', async () => {
-            const cedula = document.getElementById('buscarCedulaInput').value.trim();
-            if (!cedula) {
-                alert('Ingrese una cédula para buscar');
-                return;
-            }
-            const resultado = await buscarCedulaEnNube(cedula);
-            const divResultado = document.getElementById('resultadoBusqueda');
-            const itemsDiv = document.getElementById('resultadoItems');
-            
-            if (resultado.encontrado && resultado.resultados && resultado.resultados.length > 0) {
-                itemsDiv.innerHTML = resultado.resultados.map(r => `
-                    <div class="resultado-item">
-                        <strong>📅 Año:</strong> ${r.año}<br>
-                        <strong>📖 Libro:</strong> ${r.libro}<br>
-                        <strong>🏢 Unidad_R:</strong> ${r.unidad_r}<br>
-                        <strong>📁 Archivo:</strong> ${r.archivo}<br>
-                        <strong>🕐 Fecha registro:</strong> ${formatearFechaVisible(r.fecha_registro)}
-                    </div>
-                `).join('');
-                divResultado.style.display = 'block';
-            } else {
-                itemsDiv.innerHTML = '<div class="resultado-item">❌ No se encontró la cédula en ningún registro</div>';
-                divResultado.style.display = 'block';
-            }
-        });
-
-        document.getElementById('volverAnalista').addEventListener('click', () => { location.reload(); });
-        document.getElementById('volverOperador').addEventListener('click', () => { location.reload(); });
-
-        document.getElementById('btnGenerarInforme').addEventListener('click', () => {
-            const ahora = new Date();
-            const registrosFiltrados = obtenerRegistrosFiltrados();
-            const win = window.open();
-            win.document.write(`
-                <html>
-                <head><title>Informe - ${unidadFiltroActual === "TODAS" ? "Todas las unidades" : unidadFiltroActual}</title></head>
-                <body style="font-family:sans-serif; padding:20px;">
-                    <h2>📄 Reporte Consolidado</h2>
-                    <p>Fecha: ${ahora.toLocaleString()}</p>
-                    <p>Unidad filtrada: <strong>${unidadFiltroActual === "TODAS" ? "TODAS LAS UNIDADES" : unidadFiltroActual}</strong></p>
-                    <hr/>
-                    <h3>Total Reservistas: ${registrosFiltrados.length}</h3>
-                </body>
-                </html>
-            `);
-            win.document.close();
-        });
-    </script>
+      })
+      .obtenerResumenInicial();
+  }
+  
+  document.getElementById('btnAgregar').addEventListener('click', () => {
+    const anio = document.getElementById('anio').value.trim();
+    const unidad = document.getElementById('unidad').value.trim().toUpperCase();
+    const cedulasRaw = document.getElementById('cedulas').value.trim();
+    
+    if (!cedulasRaw) {
+      mostrarStatus('❌ Ingrese al menos una cédula', true);
+      return;
+    }
+    
+    const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
+    if (listaCedulas.length === 0) {
+      mostrarStatus('❌ Cédulas inválidas', true);
+      return;
+    }
+    
+    agregarReservistas(anio, unidad, listaCedulas);
+    document.getElementById('cedulas').value = '';
+  });
+  
+  cargarDatosIniciales();
+</script>
 </body>
 </html>
