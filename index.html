@@ -2,191 +2,416 @@
 <html>
 <head>
   <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro para Analistas</title>
   <style>
-    * { box-sizing: border-box; font-family: system-ui, 'Segoe UI', monospace; }
-    body { background: #f0f2f5; margin: 0; padding: 20px; }
-    .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }
-    .header { background: #1e3a5f; color: white; padding: 20px 24px; font-size: 20px; font-weight: bold; }
-    .lote-actual { padding: 24px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
-    .campo { margin-bottom: 16px; }
-    .campo label { display: block; font-weight: 600; margin-bottom: 6px; color: #1e3a5f; }
-    .campo input, .campo select { width: 100%; padding: 10px 12px; border: 1px solid #ced4da; border-radius: 8px; font-size: 14px; }
-    .boton-agregar { background: #28a745; color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 14px; }
-    .boton-agregar:hover { background: #218838; }
-    .actividad { padding: 16px 24px; background: #e9ecef; display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #dee2e6; }
-    .actividad span:first-child { font-weight: 600; }
-    .actividad span:last-child { font-size: 28px; font-weight: bold; color: #1e3a5f; }
-    .tabla-wrapper { padding: 24px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #1e3a5f; color: white; padding: 12px; text-align: left; }
-    td { padding: 10px 12px; border-bottom: 1px solid #dee2e6; }
-    .status { position: fixed; bottom: 20px; right: 20px; background: #1e3a5f; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+    }
+    
+    body {
+      background: #eef2f5;
+      margin: 0;
+      padding: 24px 16px;
+    }
+    
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #1a3a4f 0%, #0f2b3a 100%);
+      color: white;
+      padding: 24px 32px;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    
+    .lote-actual {
+      padding: 28px 32px;
+      background: #ffffff;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .campo {
+      margin-bottom: 20px;
+    }
+    
+    .campo label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a3a4f;
+      font-size: 14px;
+    }
+    
+    .campo input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #dee2e6;
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.2s;
+      background: #fefefe;
+    }
+    
+    .campo input:focus {
+      outline: none;
+      border-color: #2c7da0;
+      box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+    }
+    
+    .boton-agregar {
+      background: #2c7da0;
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    
+    .boton-agregar:hover {
+      background: #1f5e7a;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .actividad {
+      padding: 20px 32px;
+      background: #f8fafc;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    .actividad span:first-child {
+      font-weight: 600;
+      color: #1a3a4f;
+      font-size: 16px;
+    }
+    
+    .actividad span:last-child {
+      font-size: 32px;
+      font-weight: 800;
+      color: #2c7da0;
+    }
+    
+    .tabla-wrapper {
+      padding: 24px 32px 32px 32px;
+      overflow-x: auto;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    th {
+      background: #1a3a4f;
+      color: white;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eef2f5;
+      background: white;
+    }
+    
+    tr:hover td {
+      background: #f8fafc;
+    }
+    
+    .status {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #2c7da0;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+    }
+    
+    .load-placeholder {
+      text-align: center;
+      padding: 40px;
+      color: #7a8e9e;
+    }
+    
+    @media (max-width: 640px) {
+      .header, .lote-actual, .actividad, .tabla-wrapper {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+    }
   </style>
 </head>
 <body>
+
 <div class="container">
-  <div class="header">📋 REGISTRO PARA ANALISTAS</div>
+  <div class="header">📋 REGISTRO PARA ANALISTAS — OPTIMIZADO</div>
   
   <div class="lote-actual">
     <div class="campo">
-      <label>📖 Año del libro:</label>
-      <input type="number" id="anio" placeholder="Ej: 1975" value="2024">
+      <label>📖 AÑO DEL LIBRO</label>
+      <input type="number" id="anio" placeholder="Ej: 1975" value="2025">
     </div>
     <div class="campo">
-      <label>🏢 Unidad del reservista:</label>
+      <label>🏢 UNIDAD DEL RESERVISTA</label>
       <input type="text" id="unidad" placeholder="Ej: 11 BRIGADA" value="1RA DIVISION">
     </div>
     <div class="campo">
-      <label>🆔 Cédula(s) (separadas por coma):</label>
-      <input type="text" id="cedulas" placeholder="Ej: 11526483, 12827266">
+      <label>🆔 CÉDULA(S) — separadas por coma</label>
+      <input type="text" id="cedulas" placeholder="Ej: 11526483, 12827266, 13578900">
     </div>
-    <button class="boton-agregar" id="btnAgregar">+ AGREGAR RESERVISTA(S) AL LOTE</button>
+    <button class="boton-agregar" id="btnAgregar">➕ AGREGAR RESERVISTA(S) AL LOTE</button>
   </div>
   
   <div class="actividad">
-    <span>🎯 MI ACTIVIDAD</span>
+    <span>🎯 TOTAL CÉDULAS DIGITALIZADAS</span>
     <span id="totalActividad">0</span>
   </div>
   
   <div class="tabla-wrapper">
     <table id="tablaDesglose">
-      <thead><tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr></thead>
-      <tbody id="tablaBody"></tbody>
+      <thead>
+        <tr><th>AÑO</th><th>UNIDAD DEL RESERVISTA</th><th>CÉDULAS</th></tr>
+      </thead>
+      <tbody id="tablaBody">
+        <tr class="load-placeholder"><td colspan="3">Cargando datos...</td></tr>
+      </tbody>
     </table>
   </div>
 </div>
-<div id="statusMsg" class="status">✅ Guardado</div>
+
+<div id="statusMsg" class="status">✅ Listo</div>
 
 <script>
-  // ESTADO OPTIMIZADO CON INDEX MAP
-  let indexMap = new Map();
-  let totalCedulas = 0;
-  const tbody = document.getElementById('tablaBody');
-  const totalSpan = document.getElementById('totalActividad');
-  const statusDiv = document.getElementById('statusMsg');
-  
-  function mostrarStatus(mensaje, esError = false) {
-    statusDiv.textContent = mensaje;
-    statusDiv.style.background = esError ? '#dc3545' : '#28a745';
-    statusDiv.style.opacity = '1';
-    setTimeout(() => { statusDiv.style.opacity = '0'; }, 2000);
-  }
-  
-  function actualizarTotalUI() {
-    totalSpan.textContent = totalCedulas;
-  }
-  
-  function crearFila(anio, unidad, cantidad) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${anio}</td><td>${unidad}</td><td class="count-cell">${cantidad} cédula${cantidad !== 1 ? 's' : ''}</td>`;
-    return tr;
-  }
-  
-  function actualizarCeldaCount(rowElement, nuevoCount) {
-    const countCell = rowElement.querySelector('.count-cell');
-    if (countCell) countCell.textContent = `${nuevoCount} cédula${nuevoCount !== 1 ? 's' : ''}`;
-  }
-  
-  function revertirCambios(clave, cantidad) {
-    const entrada = indexMap.get(clave);
-    if (entrada) {
-      const nuevoCount = entrada.count - cantidad;
-      if (nuevoCount <= 0) {
-        entrada.rowElement.remove();
-        indexMap.delete(clave);
-      } else {
-        entrada.count = nuevoCount;
-        actualizarCeldaCount(entrada.rowElement, nuevoCount);
+  (function() {
+    // ============================================================
+    // ESTADO EN MEMORIA: MAP con clave "año|unidad" → elemento+conteo
+    // ============================================================
+    let indexMap = new Map();        // clave → { rowElement, count }
+    let totalCedulasGlobal = 0;
+    
+    const tbody = document.getElementById('tablaBody');
+    const totalSpan = document.getElementById('totalActividad');
+    const statusDiv = document.getElementById('statusMsg');
+    
+    // Helper UI
+    function mostrarStatus(mensaje, esError = false) {
+      statusDiv.textContent = mensaje;
+      statusDiv.style.background = esError ? '#c0392b' : '#2c7da0';
+      statusDiv.style.opacity = '1';
+      setTimeout(() => { statusDiv.style.opacity = '0'; }, 2200);
+    }
+    
+    function actualizarTotalUI() {
+      totalSpan.textContent = totalCedulasGlobal;
+    }
+    
+    function crearFila(anio, unidad, cantidad) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:500;">${escapeHtml(anio)}</td>
+        <td>${escapeHtml(unidad)}</td>
+        <td class="count-cell">${cantidad} cédula${cantidad !== 1 ? 's' : ''}</td>
+      `;
+      return tr;
+    }
+    
+    function actualizarCeldaCount(rowElement, nuevoCount) {
+      const countCell = rowElement.querySelector('.count-cell');
+      if (countCell) {
+        countCell.textContent = `${nuevoCount} cédula${nuevoCount !== 1 ? 's' : ''}`;
       }
     }
-    totalCedulas -= cantidad;
-    actualizarTotalUI();
-  }
-  
-  async function agregarReservistas(anio, unidad, listaCedulas) {
-    if (!anio || !unidad || listaCedulas.length === 0) {
-      mostrarStatus('❌ Complete todos los campos', true);
-      return false;
-    }
     
-    const clave = `${anio}|${unidad}`;
-    const cantidadNueva = listaCedulas.length;
-    
-    // Actualización optimista UI
-    let filaExistente = indexMap.get(clave);
-    if (filaExistente) {
-      filaExistente.count += cantidadNueva;
-      actualizarCeldaCount(filaExistente.rowElement, filaExistente.count);
-    } else {
-      const nuevaFila = crearFila(anio, unidad, cantidadNueva);
-      tbody.appendChild(nuevaFila);
-      indexMap.set(clave, { rowElement: nuevaFila, count: cantidadNueva });
-    }
-    
-    totalCedulas += cantidadNueva;
-    actualizarTotalUI();
-    
-    // Envío a Apps Script
-    try {
-      const result = await new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
-          .procesarLote({ anio, unidad, cedulas: listaCedulas });
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
       });
+    }
+    
+    // Reversión en caso de error del servidor
+    function revertirCambios(clave, cantidadARevertir) {
+      const entrada = indexMap.get(clave);
+      if (entrada) {
+        const nuevoCount = entrada.count - cantidadARevertir;
+        if (nuevoCount <= 0) {
+          entrada.rowElement.remove();
+          indexMap.delete(clave);
+        } else {
+          entrada.count = nuevoCount;
+          actualizarCeldaCount(entrada.rowElement, nuevoCount);
+        }
+      }
+      totalCedulasGlobal -= cantidadARevertir;
+      actualizarTotalUI();
+      mostrarStatus(`↻ Reversión aplicada (${cantidadARevertir} cédula(s))`, true);
+    }
+    
+    // ============================================================
+    // NÚCLEO OPTIMIZADO: actualización por lotes y DOM mínimo
+    // ============================================================
+    async function agregarReservistas(anio, unidad, listaCedulas) {
+      if (!anio || !unidad || listaCedulas.length === 0) {
+        mostrarStatus('❌ Completa año, unidad y al menos una cédula', true);
+        return false;
+      }
       
-      if (result.success) {
-        mostrarStatus(`✅ +${cantidadNueva} cédula(s) guardadas`);
+      const clave = `${anio}|${unidad}`;
+      const cantidadNueva = listaCedulas.length;
+      
+      // 1️⃣ ACTUALIZACIÓN UI OPTIMISTA (inmediata, sin esperar servidor)
+      let filaExistente = indexMap.get(clave);
+      if (filaExistente) {
+        filaExistente.count += cantidadNueva;
+        actualizarCeldaCount(filaExistente.rowElement, filaExistente.count);
       } else {
-        mostrarStatus(`⚠️ Error: ${result.error}`, true);
+        const nuevaFila = crearFila(anio, unidad, cantidadNueva);
+        tbody.appendChild(nuevaFila);
+        indexMap.set(clave, { rowElement: nuevaFila, count: cantidadNueva });
+      }
+      
+      totalCedulasGlobal += cantidadNueva;
+      actualizarTotalUI();
+      
+      // 2️⃣ ENVÍO AL SERVIDOR (background, sin bloquear)
+      try {
+        const resultado = await new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .procesarLote({ anio: anio, unidad: unidad, cedulas: listaCedulas });
+        });
+        
+        if (resultado && resultado.success) {
+          mostrarStatus(`✅ +${cantidadNueva} cédula(s) · Total ahora: ${resultado.nuevoTotal}`);
+        } else {
+          // Fallo lógico del servidor: revertir
+          const errorMsg = resultado?.error || 'Error desconocido';
+          mostrarStatus(`⚠️ Servidor: ${errorMsg} · Revirtiendo`, true);
+          revertirCambios(clave, cantidadNueva);
+        }
+      } catch (error) {
+        // Error de red o timeout
+        console.error(error);
+        mostrarStatus(`❌ Error de conexión · Revirtiendo cambios`, true);
         revertirCambios(clave, cantidadNueva);
       }
-    } catch (error) {
-      mostrarStatus(`❌ Error de red: revertiendo...`, true);
-      revertirCambios(clave, cantidadNueva);
+      
+      return true;
     }
     
-    return true;
-  }
-  
-  function cargarDatosIniciales() {
-    google.script.run
-      .withSuccessHandler((data) => {
-        const { resumen, totalGeneral } = data;
-        totalCedulas = totalGeneral;
-        actualizarTotalUI();
-        
-        for (const [clave, cantidad] of Object.entries(resumen)) {
-          const [anio, unidad] = clave.split('|');
-          const fila = crearFila(anio, unidad, cantidad);
-          tbody.appendChild(fila);
-          indexMap.set(clave, { rowElement: fila, count: cantidad });
-        }
-      })
-      .obtenerResumenInicial();
-  }
-  
-  document.getElementById('btnAgregar').addEventListener('click', () => {
-    const anio = document.getElementById('anio').value.trim();
-    const unidad = document.getElementById('unidad').value.trim().toUpperCase();
-    const cedulasRaw = document.getElementById('cedulas').value.trim();
-    
-    if (!cedulasRaw) {
-      mostrarStatus('❌ Ingrese al menos una cédula', true);
-      return;
+    // ============================================================
+    // CARGA INICIAL (desde Google Sheet)
+    // ============================================================
+    function cargarDatosIniciales() {
+      // Limpiar tabla y mapa
+      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+      indexMap.clear();
+      totalCedulasGlobal = 0;
+      
+      google.script.run
+        .withSuccessHandler((data) => {
+          const { resumen, totalGeneral } = data;
+          totalCedulasGlobal = totalGeneral || 0;
+          actualizarTotalUI();
+          
+          // Ordenar claves para mostrar consistencia
+          const clavesOrdenadas = Object.keys(resumen || {}).sort();
+          if (clavesOrdenadas.length === 0) {
+            const emptyRow = document.createElement('tr');
+            emptyRow.innerHTML = '<td colspan="3" style="text-align:center; padding:32px; color:#7a8e9e;">📭 No hay registros aún. Agrega tu primer lote.</td>';
+            tbody.appendChild(emptyRow);
+          } else {
+            for (const clave of clavesOrdenadas) {
+              const [anio, unidad] = clave.split('|');
+              const cantidad = resumen[clave];
+              const fila = crearFila(anio, unidad, cantidad);
+              tbody.appendChild(fila);
+              indexMap.set(clave, { rowElement: fila, count: cantidad });
+            }
+          }
+          mostrarStatus(`📥 Cargados ${totalCedulasGlobal} cédula(s)`, false);
+        })
+        .withFailureHandler((err) => {
+          console.error(err);
+          tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:32px; color:#c0392b;">❌ Error al cargar datos. Revisa la consola.</td></tr>';
+          mostrarStatus('Error de carga inicial', true);
+        })
+        .obtenerResumenInicial();
     }
     
-    const listaCedulas = cedulasRaw.split(',').map(c => c.trim()).filter(c => c.length > 0);
-    if (listaCedulas.length === 0) {
-      mostrarStatus('❌ Cédulas inválidas', true);
-      return;
-    }
+    // ============================================================
+    // EVENTOS Y ARRANQUE
+    // ============================================================
+    document.getElementById('btnAgregar').addEventListener('click', () => {
+      const anio = document.getElementById('anio').value.trim();
+      let unidad = document.getElementById('unidad').value.trim();
+      const cedulasRaw = document.getElementById('cedulas').value.trim();
+      
+      if (!anio) {
+        mostrarStatus('❌ Escribe el año', true);
+        return;
+      }
+      if (!unidad) {
+        mostrarStatus('❌ Escribe la unidad', true);
+        return;
+      }
+      if (!cedulasRaw) {
+        mostrarStatus('❌ Ingresa al menos una cédula', true);
+        return;
+      }
+      
+      unidad = unidad.toUpperCase();
+      const listaCedulas = cedulasRaw.split(',')
+        .map(c => c.trim())
+        .filter(c => c.length > 0);
+      
+      if (listaCedulas.length === 0) {
+        mostrarStatus('❌ Cédulas inválidas (solo números separados por coma)', true);
+        return;
+      }
+      
+      // Ejecutar acción optimizada
+      agregarReservistas(anio, unidad, listaCedulas);
+      document.getElementById('cedulas').value = '';  // limpiar campo para próxima entrada rápida
+    });
     
-    agregarReservistas(anio, unidad, listaCedulas);
-    document.getElementById('cedulas').value = '';
-  });
-  
-  cargarDatosIniciales();
+    // Inicializar la app
+    cargarDatosIniciales();
+  })();
 </script>
 </body>
 </html>
