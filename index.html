@@ -31,10 +31,17 @@
         .stat-card-azul { background: linear-gradient(135deg, #2196F3 0%, #0b5e9e 100%); }
         .stat-number { font-size: 28px; font-weight: bold; }
         .stat-label { font-size: 11px; opacity: 0.9; margin-top: 5px; }
+        .buscador { background: #f8f9fa; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .buscador label { font-weight: 600; color: #1e3c72; }
+        .buscador input { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; font-size: 14px; }
+        .buscador button { background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; }
+        .resultado-busqueda { background: #e8f5e9; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: none; }
+        .resultado-busqueda h4 { color: #2e7d32; margin-bottom: 10px; }
+        .resultado-item { background: white; border-radius: 12px; padding: 10px; margin-bottom: 8px; border-left: 4px solid #4CAF50; }
         .filtro-unidad { background: #f8f9fa; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
         .filtro-unidad label { font-weight: 600; color: #1e3c72; }
-        .filtro-unidad select { flex: 1; min-width: 200px; }
-        .filtro-unidad button { background: #1e3c72; color: white; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; }
+        .filtro-unidad select { flex: 1; min-width: 200px; padding: 12px; border: 1px solid #ced4da; border-radius: 12px; }
+        .filtro-unidad button { background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 12px; cursor: pointer; }
         .seccion-tabla { margin-bottom: 25px; }
         .seccion-tabla h4 { color: #1e3c72; margin-bottom: 12px; }
         .tabla-container { overflow-x: auto; max-height: 400px; overflow-y: auto; }
@@ -61,6 +68,8 @@
         .tabla-lote { margin-top: 15px; overflow-x: auto; max-height: 300px; overflow-y: auto; }
         .tabla-lote table { font-size: 12px; width: 100%; }
         .tabla-lote th, .tabla-lote td { padding: 5px; }
+        .mis-registros { background: #e8f5e9; border-radius: 16px; padding: 15px; margin-top: 20px; }
+        .mis-registros h4 { color: #2e7d32; margin-bottom: 10px; }
         @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .stat-number { font-size: 24px; } th, td { font-size: 11px; padding: 6px 4px; } .btn-accion { padding: 3px 6px; font-size: 10px; } }
     </style>
 </head>
@@ -140,7 +149,7 @@
                 <div id="resumenLote" style="display: none;">
                     <h4>📊 RESERVISTAS EN ESTE LOTE</h4>
                     <div class="tabla-lote">
-                        <table>
+                        <tr>
                             <thead>
                                 <tr><th>#</th><th>CÉDULA</th><th>UNIDAD_R</th><th>LIBRO</th><th>DESDE</th><th>ACCIÓN</th></tr>
                             </thead>
@@ -152,6 +161,22 @@
                     </div>
                     <button id="btnConfirmarLote" class="btn-eliminar-lote">✅ CONFIRMAR Y ENVIAR LOTE</button>
                     <button id="btnCancelarLote" style="background: #6c757d; margin-top: 10px; color: white; border: none; padding: 10px; border-radius: 12px; width: 100%; cursor: pointer;">🗑️ CANCELAR LOTE</button>
+                </div>
+                
+                <!-- MIS REGISTROS (para el analista) -->
+                <div id="misRegistros" class="mis-registros" style="display: none;">
+                    <h4>📋 MIS REGISTROS</h4>
+                    <div class="tabla-container">
+                        <table style="width: 100%;">
+                            <thead>
+                                <tr><th>FECHA</th><th>LIBRO</th><th>UNIDAD_R</th><th>CÉDULA_R</th><th>DESDE</th></tr>
+                            </thead>
+                            <tbody id="tbodyMisRegistros"></tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 10px; text-align: right;">
+                        <strong>Total: <span id="totalMisRegistros">0</span> registros</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -189,7 +214,20 @@
                         </div>
                     </div>
 
-                    <!-- NUEVO SELECTOR DE UNIDAD -->
+                    <!-- BUSCADOR DE CÉDULA -->
+                    <div class="buscador">
+                        <label>🔍 Buscar cédula de reservista:</label>
+                        <input type="text" id="buscarCedulaInput" placeholder="Ej: 12345678">
+                        <button id="btnBuscarCedula">Buscar</button>
+                    </div>
+
+                    <!-- RESULTADO DE BÚSQUEDA -->
+                    <div id="resultadoBusqueda" class="resultado-busqueda">
+                        <h4>📌 Resultado de la búsqueda</h4>
+                        <div id="resultadoItems"></div>
+                    </div>
+
+                    <!-- FILTRO POR UNIDAD -->
                     <div class="filtro-unidad">
                         <label>🏢 Filtrar por unidad del analista:</label>
                         <select id="filtroUnidadAnalista">
@@ -221,25 +259,6 @@
                         </div>
                     </div>
 
-                    <!-- RESUMEN POR UNIDAD SELECCIONADA -->
-                    <div id="resumenUnidad" style="background: #e3f2fd; border-radius: 16px; padding: 15px; margin-bottom: 20px; display: none;">
-                        <h4>📊 RESUMEN DE LA UNIDAD <span id="nombreUnidadSeleccionada"></span></h4>
-                        <div class="stats-grid" style="margin-bottom: 0;">
-                            <div class="stat-card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
-                                <div class="stat-number" id="resumenTotalReservistas">0</div>
-                                <div class="stat-label">TOTAL RESERVISTAS</div>
-                            </div>
-                            <div class="stat-card" style="background: linear-gradient(135deg, #17a2b8 0%, #0b5e9e 100%);">
-                                <div class="stat-number" id="resumenTotalLibros">0</div>
-                                <div class="stat-label">LIBROS DIFERENTES</div>
-                            </div>
-                            <div class="stat-card" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);">
-                                <div class="stat-number" id="resumenTotalAnalistasUnidad">0</div>
-                                <div class="stat-label">ANALISTAS</div>
-                            </div>
-                        </div>
-                    </div>
-
                     <button id="btnGenerarInforme" style="background: #ff9800; color: white; padding: 14px; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px;">📄 GENERAR INFORME</button>
                 </div>
             </div>
@@ -248,7 +267,7 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2qU7UPg-MeE0leWFKOhzlBhp-_wTiT2h992eGA1oGSyTZ4qFEaWqGLzBcm7RGHpU3/exec";
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwGFPGALatgXJJZ9yrA8q_dEnyxXRucBF6hJsYhK02-vdZTdgzDsVvyBz2y5Zh2EzUn/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -266,6 +285,7 @@
         let loteActual = [];
         let datosAnalista = { cedula: "", unidad: "" };
         let unidadFiltroActual = "TODAS";
+        let cedulaAnalistaActual = "";
         
         function pad2(n) { return String(n).padStart(2, '0'); }
         
@@ -296,6 +316,17 @@
             }
         }
         
+        async function buscarCedulaEnNube(cedula) {
+            try {
+                const respuesta = await fetch(`${SCRIPT_URL}?cedula=${cedula}`);
+                const datos = await respuesta.json();
+                return datos;
+            } catch(e) {
+                console.error('Error:', e);
+                return { encontrado: false, error: e.toString() };
+            }
+        }
+        
         async function guardarReservistas(reservistas) {
             try {
                 for (const r of reservistas) {
@@ -315,32 +346,29 @@
                         })
                     });
                 }
+                await cargarDatosDesdeNube();
                 return true;
             } catch(e) { 
                 console.error('Error guardando:', e);
                 return false; 
             }
         }
-
-        async function eliminarReservista(index) {
-            const objetivo = registrosReservistas[index];
-            if (confirm(`¿Eliminar permanentemente al reservista C.I: ${objetivo.cedula_r}?`)) {
-                try {
-                    await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            tipo: "eliminar_reservista",
-                            cedula_r: objetivo.cedula_r,
-                            timestamp: objetivo.timestamp
-                        })
-                    });
-                    alert('✅ Registro eliminado');
-                    setTimeout(cargarDatosDesdeNube, 1000);
-                } catch (e) {
-                    alert('❌ Error');
-                }
+        
+        async function cargarMisRegistros(cedula) {
+            try {
+                const respuesta = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipo: "mis_registros",
+                        cedula_analista: cedula
+                    })
+                });
+                const datos = await respuesta.json();
+                return datos;
+            } catch(e) {
+                console.error('Error:', e);
+                return { success: false, registros: [] };
             }
         }
         
@@ -376,31 +404,6 @@
             return registrosReservistas.filter(r => r.unidad_analista === unidadFiltroActual);
         }
         
-        function actualizarResumenUnidad() {
-            const registrosFiltrados = obtenerRegistrosFiltrados();
-            const resumenDiv = document.getElementById('resumenUnidad');
-            
-            if (unidadFiltroActual === "TODAS") {
-                resumenDiv.style.display = 'none';
-                return;
-            }
-            
-            const totalReservistas = registrosFiltrados.length;
-            const librosSet = new Set();
-            const analistasSet = new Set();
-            
-            registrosFiltrados.forEach(r => {
-                if (r.libro) librosSet.add(r.libro);
-                if (r.cedula_analista) analistasSet.add(r.cedula_analista);
-            });
-            
-            document.getElementById('nombreUnidadSeleccionada').innerText = unidadFiltroActual;
-            document.getElementById('resumenTotalReservistas').innerText = totalReservistas;
-            document.getElementById('resumenTotalLibros').innerText = librosSet.size;
-            document.getElementById('resumenTotalAnalistasUnidad').innerText = analistasSet.size;
-            resumenDiv.style.display = 'block';
-        }
-        
         function actualizarPanelOperador() {
             const hoy = getFechaHoy();
             const registrosFiltrados = obtenerRegistrosFiltrados();
@@ -423,7 +426,7 @@
             if (tbody) {
                 const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros para esta unidad</div></div></td>';
+                    tbody.innerHTML = '<td><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></td>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.indexOf(r);
@@ -441,8 +444,28 @@
                     }).join('');
                 }
             }
-            
-            actualizarResumenUnidad();
+        }
+        
+        async function eliminarReservista(index) {
+            const objetivo = registrosReservistas[index];
+            if (confirm(`¿Eliminar permanentemente al reservista C.I: ${objetivo.cedula_r}?`)) {
+                try {
+                    await fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            tipo: "eliminar_reservista",
+                            cedula_r: objetivo.cedula_r,
+                            timestamp: objetivo.timestamp
+                        })
+                    });
+                    alert('✅ Registro eliminado');
+                    await cargarDatosDesdeNube();
+                } catch (e) {
+                    alert('❌ Error');
+                }
+            }
         }
         
         function actualizarSelectUnidad(selectId, incluirOtra = true) {
@@ -498,7 +521,7 @@
             actualizarPanelOperador();
         }
 
-        // EVENTOS
+        // EVENTOS DEL ANALISTA
         document.getElementById('btnAnalista').addEventListener('click', () => {
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelAnalista').classList.add('panel-activo');
@@ -516,7 +539,7 @@
             }
         });
 
-        document.getElementById('formDatosAnalista').addEventListener('submit', (e) => {
+        document.getElementById('formDatosAnalista').addEventListener('submit', async (e) => {
             e.preventDefault();
             let unidad = document.getElementById('unidadAnalistaPrincipal').value;
             if (unidad === "OTRA_UNIDAD") {
@@ -524,9 +547,32 @@
             }
             datosAnalista.cedula = document.getElementById('cedulaAnalistaPrincipal').value.trim();
             datosAnalista.unidad = unidad;
+            cedulaAnalistaActual = datosAnalista.cedula;
 
             document.getElementById('mostrarCedulaAnalista').innerText = datosAnalista.cedula;
             document.getElementById('mostrarUnidadAnalista').innerText = datosAnalista.unidad;
+            
+            // Cargar sus registros
+            const misRegistros = await cargarMisRegistros(cedulaAnalistaActual);
+            if (misRegistros.success && misRegistros.registros.length > 0) {
+                const tbody = document.getElementById('tbodyMisRegistros');
+                const registrosOrdenados = misRegistros.registros.reverse();
+                tbody.innerHTML = registrosOrdenados.map((r, i) => `
+                    <tr>
+                        <td>${formatearFechaVisible(r.timestamp)}</div> </div>
+                        <td>${r.libro || 'N/A'} </div> </div>
+                        <td>${r.unidad_r || 'N/A'} </div> </div>
+                        <td><strong>${r.cedula_r || 'N/A'}</strong></div> </div>
+                        <td>${r.desde || 'N/A'} </div> </div>
+                    </tr>
+                `).join('');
+                document.getElementById('totalMisRegistros').innerText = misRegistros.registros.length;
+                document.getElementById('misRegistros').style.display = 'block';
+            } else {
+                document.getElementById('misRegistros').style.display = 'block';
+                document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="5">No tiene registros aún</div> </div></tr>';
+                document.getElementById('totalMisRegistros').innerText = '0';
+            }
             
             document.getElementById('formularioAnalista').style.display = 'none';
             document.getElementById('formularioCarga').style.display = 'block';
@@ -594,7 +640,22 @@
                 alert('✅ Lote enviado exitosamente');
                 loteActual = [];
                 actualizarResumenLote();
-                await cargarDatosDesdeNube();
+                // Recargar sus registros
+                const misRegistros = await cargarMisRegistros(cedulaAnalistaActual);
+                if (misRegistros.success) {
+                    const tbody = document.getElementById('tbodyMisRegistros');
+                    const registrosOrdenados = misRegistros.registros.reverse();
+                    tbody.innerHTML = registrosOrdenados.map((r, i) => `
+                        <tr>
+                            <td>${formatearFechaVisible(r.timestamp)}</div> </div>
+                            <td>${r.libro || 'N/A'} </div> </div>
+                            <td>${r.unidad_r || 'N/A'} </div> </div>
+                            <td><strong>${r.cedula_r || 'N/A'}</strong></div> </div>
+                            <td>${r.desde || 'N/A'} </div> </div>
+                        </tr>
+                    `).join('');
+                    document.getElementById('totalMisRegistros').innerText = misRegistros.registros.length;
+                }
             } else {
                 alert('❌ Error al enviar');
             }
@@ -609,6 +670,7 @@
             }
         });
 
+        // EVENTOS DEL OPERADOR
         document.getElementById('btnOperador').addEventListener('click', () => {
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelOperador').classList.add('panel-activo');
@@ -626,6 +688,33 @@
         
         document.getElementById('btnFiltrarUnidad').addEventListener('click', aplicarFiltro);
         document.getElementById('btnLimpiarFiltro').addEventListener('click', limpiarFiltro);
+        
+        document.getElementById('btnBuscarCedula').addEventListener('click', async () => {
+            const cedula = document.getElementById('buscarCedulaInput').value.trim();
+            if (!cedula) {
+                alert('Ingrese una cédula para buscar');
+                return;
+            }
+            const resultado = await buscarCedulaEnNube(cedula);
+            const divResultado = document.getElementById('resultadoBusqueda');
+            const itemsDiv = document.getElementById('resultadoItems');
+            
+            if (resultado.encontrado && resultado.resultados && resultado.resultados.length > 0) {
+                itemsDiv.innerHTML = resultado.resultados.map(r => `
+                    <div class="resultado-item">
+                        <strong>📅 Año:</strong> ${r.año}<br>
+                        <strong>📖 Libro:</strong> ${r.libro}<br>
+                        <strong>🏢 Unidad_R:</strong> ${r.unidad_r}<br>
+                        <strong>📁 Archivo:</strong> ${r.archivo}<br>
+                        <strong>🕐 Fecha registro:</strong> ${formatearFechaVisible(r.fecha_registro)}
+                    </div>
+                `).join('');
+                divResultado.style.display = 'block';
+            } else {
+                itemsDiv.innerHTML = '<div class="resultado-item">❌ No se encontró la cédula en ningún registro</div>';
+                divResultado.style.display = 'block';
+            }
+        });
 
         document.getElementById('volverAnalista').addEventListener('click', () => { location.reload(); });
         document.getElementById('volverOperador').addEventListener('click', () => { location.reload(); });
