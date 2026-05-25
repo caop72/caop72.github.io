@@ -70,6 +70,8 @@
         .tabla-lote th, .tabla-lote td { padding: 5px; }
         .mis-registros { background: #e8f5e9; border-radius: 16px; padding: 15px; margin-top: 20px; }
         .mis-registros h4 { color: #2e7d32; margin-bottom: 10px; }
+        .toast-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; z-index: 1000; animation: fadeOut 3s ease forwards; }
+        @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
         @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .stat-number { font-size: 24px; } th, td { font-size: 11px; padding: 6px 4px; } .btn-accion { padding: 3px 6px; font-size: 10px; } }
     </style>
 </head>
@@ -246,7 +248,8 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYao90nlpmCD79ISheGPnTttdlJm52r9FmN6nIvYuBZa7t2g8uyGE563t2PPosHj4/exec";
+        // ✅ NUEVA URL DEL APPS SCRIPT ACTUALIZADA
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7o7BJS84WpbjSNxSZoKnLOg9IgzSXA99YjeYpzzmPI_xm_V1pG8KmAVDmBd9so56l/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -266,6 +269,15 @@
         let unidadFiltroActual = "TODAS";
         let cedulaAnalistaActual = "";
         
+        function mostrarToast(mensaje, esError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = mensaje;
+            toast.style.background = esError ? '#dc3545' : '#28a745';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
         function pad2(n) { return String(n).padStart(2, '0'); }
         
         function getFechaHoy() {
@@ -284,14 +296,22 @@
             try {
                 if (loadingDiv) loadingDiv.style.display = 'block';
                 const respuesta = await fetch(SCRIPT_URL);
+                
+                if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+                
                 const datos = await respuesta.json();
                 registrosReservistas = Array.isArray(datos.reservistas) ? datos.reservistas : [];
                 actualizarSelectFiltroUnidad();
                 actualizarPanelOperador();
                 if (loadingDiv) loadingDiv.style.display = 'none';
+                mostrarToast('✅ Datos cargados correctamente');
             } catch(e) {
-                console.error('Error:', e);
-                if (loadingDiv) loadingDiv.innerHTML = '⚠️ Error de conexión';
+                console.error('Error cargando datos:', e);
+                if (loadingDiv) {
+                    loadingDiv.innerHTML = '⚠️ Error de conexión. Verifica que el Apps Script esté publicado como "Cualquier usuario"';
+                    loadingDiv.style.color = '#dc3545';
+                }
+                mostrarToast('❌ Error de conexión: ' + e.message, true);
             }
         }
         
@@ -309,9 +329,8 @@
         async function guardarReservistas(reservistas) {
             try {
                 for (const r of reservistas) {
-                    await fetch(SCRIPT_URL, {
+                    const respuesta = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             tipo: "reservista",
@@ -324,11 +343,17 @@
                             desde: r.desde
                         })
                     });
+                    
+                    const resultado = await respuesta.json();
+                    if (!resultado.success) {
+                        throw new Error(resultado.error || 'Error al guardar');
+                    }
                 }
                 await cargarDatosDesdeNube();
                 return true;
             } catch(e) { 
                 console.error('Error guardando:', e);
+                mostrarToast(`❌ ${e.message}`, true);
                 return false; 
             }
         }
@@ -390,20 +415,20 @@
             if (tbody) {
                 const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></tr>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.indexOf(r);
                         return `<tr>
-                            <td>${i+1}</td>
-                            <td>${formatearFechaVisible(r.timestamp)}</td>
-                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></td>
-                            <td>${r.unidad_analista || 'N/A'}</td>
-                            <td>${r.libro || 'N/A'}</td>
-                            <td>${r.unidad_r || 'N/A'}</td>
-                            <td><strong>${r.cedula_r || 'N/A'}</strong></td>
-                            <td>${r.desde || 'N/A'}</td>
-                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></td>
+                            <td>${i+1}</div>
+                            <td>${formatearFechaVisible(r.timestamp)}</div>
+                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></div>
+                            <td>${r.unidad_analista || 'N/A'} </div>
+                            <td>${r.libro || 'N/A'} </div>
+                            <td>${r.unidad_r || 'N/A'} </div>
+                            <td><strong>${r.cedula_r || 'N/A'}</strong></div>
+                            <td>${r.desde || 'N/A'} </div>
+                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></div>
                         </tr>`;
                     }).join('');
                 }
@@ -414,9 +439,8 @@
             const objetivo = registrosReservistas[index];
             if (confirm(`¿Eliminar permanentemente al reservista C.I: ${objetivo.cedula_r}?`)) {
                 try {
-                    await fetch(SCRIPT_URL, {
+                    const respuesta = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             tipo: "eliminar_reservista",
@@ -425,10 +449,15 @@
                             libro: objetivo.libro
                         })
                     });
-                    alert('✅ Registro eliminado');
-                    await cargarDatosDesdeNube();
+                    const resultado = await respuesta.json();
+                    if (resultado.success) {
+                        mostrarToast('✅ Registro eliminado');
+                        await cargarDatosDesdeNube();
+                    } else {
+                        mostrarToast('❌ Error al eliminar', true);
+                    }
                 } catch (e) {
-                    alert('❌ Error');
+                    mostrarToast('❌ Error de conexión', true);
                 }
             }
         }
@@ -476,12 +505,12 @@
             document.getElementById('resumenLote').style.display = 'block';
             tbody.innerHTML = loteActual.map((r, i) => `
                 <tr>
-                    <td>${i+1}</td>
-                    <td>${r.cedula_r}</td>
-                    <td>${r.unidad_r}</td>
-                    <td>${r.libro}</td>
-                    <td>${r.desde}</td>
-                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></td>
+                    <td>${i+1}</div>
+                    <td>${r.cedula_r}</div>
+                    <td>${r.unidad_r}</div>
+                    <td>${r.libro}</div>
+                    <td>${r.desde}</div>
+                    <td><button class="btn-accion btn-eliminar" onclick="eliminarDelLote(${i})">🗑️</button></div>
                 </tr>
             `).join('');
             document.getElementById('totalLote').innerText = loteActual.length;
@@ -565,12 +594,12 @@
                     tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
                         <tr>
                             <td><strong>${r.año}</strong></td>
-                            <td>${r.unidad_r}</td>
+                            <td>${r.unidad_r}</div>
                             <td>${r.total} cédulas</div>
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
+                    tbody.innerHTML = '</table><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
                 }
             } else {
                 document.getElementById('totalGeneralAnalista').innerText = '0';
@@ -640,7 +669,7 @@
             
             const exito = await guardarReservistas(loteActual);
             if (exito) {
-                alert('✅ Lote enviado exitosamente');
+                mostrarToast('✅ Lote enviado exitosamente');
                 loteActual = [];
                 actualizarResumenLote();
                 
@@ -659,7 +688,7 @@
                     }
                 }
             } else {
-                alert('❌ Error al enviar');
+                mostrarToast('❌ Error al enviar el lote', true);
             }
             document.getElementById('btnConfirmarLote').disabled = false;
             document.getElementById('btnConfirmarLote').innerText = '✅ CONFIRMAR Y ENVIAR LOTE';
@@ -740,7 +769,7 @@
         });
 
         document.getElementById('btnSincronizar').addEventListener('click', async () => {
-            if (confirm('¿Reconstruir estadísticas desde los archivos anuales?')) {
+            if (confirm('⚠️ ADVERTENCIA: Esta acción reconstruirá todas las estadísticas desde los archivos anuales.\n¿Deseas continuar?')) {
                 const btn = document.getElementById('btnSincronizar');
                 btn.disabled = true;
                 btn.innerText = '⏳ SINCRONIZANDO...';
@@ -751,16 +780,20 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ tipo: "sincronizar" })
                     });
+                    
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    
                     const resultado = await response.json();
                     
                     if (resultado.success) {
-                        alert(`✅ Sincronización completada. Total: ${resultado.totalRegistros} registros`);
+                        mostrarToast(`✅ Sincronización completada. Total: ${resultado.totalRegistros} registros`);
                         await cargarDatosDesdeNube();
                     } else {
-                        alert('❌ Error: ' + resultado.error);
+                        mostrarToast(`❌ Error: ${resultado.error || 'Error desconocido'}`, true);
                     }
                 } catch(e) {
-                    alert('❌ Error de conexión');
+                    console.error('Error en sincronización:', e);
+                    mostrarToast(`❌ Error de conexión: ${e.message}`, true);
                 }
                 
                 btn.disabled = false;
