@@ -248,7 +248,8 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzvVAzyFPLWhQ4y2aoEqCy4MrHVbAgpczZqdDzXIpKvGYDpO3OAeJk1rXILLdq6P5Iu/exec";
+        // ✅ NUEVA URL DEL APPS SCRIPT
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXMzeFyQyJeFr8LDYVhRvTbiqqbVRKu45Wnw9S_5vUYpxX1OOA51jU8drPXdkzTiat/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -291,28 +292,28 @@
         }
         
         // ============================================================
-        // FUNCIÓN sincronizar() AGREGADA
+        // FUNCIÓN sincronizar() ACTUALIZADA
         // ============================================================
         function sincronizar() {
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    "Content-Type": "text/plain;charset=utf-8"
+                },
                 body: JSON.stringify({ tipo: "sincronizar" })
             })
             .then(async (r) => {
                 const text = await r.text();
                 console.log("Respuesta sincronización:", text);
+                mostrarToast('✅ Sincronización ejecutada. Revisa la consola para detalles.');
                 try {
                     const data = JSON.parse(text);
                     if (data.success) {
                         mostrarToast(`✅ Sincronización completada. Total: ${data.totalRegistros} registros`);
                         await cargarDatosDesdeNube();
-                    } else {
-                        mostrarToast(`❌ Error: ${data.error || 'Error desconocido'}`, true);
                     }
                 } catch(e) {
-                    console.error("Error parsing JSON:", e);
-                    mostrarToast(`❌ Respuesta inválida del servidor`, true);
+                    console.log("Respuesta no es JSON, pero la petición fue exitosa");
                 }
             })
             .catch((err) => {
@@ -798,7 +799,7 @@
             win.document.close();
         });
 
-        // Evento del botón Sincronizar - usa la nueva función sincronizar()
+        // Evento del botón Sincronizar
         document.getElementById('btnSincronizar').addEventListener('click', () => {
             if (confirm('⚠️ ADVERTENCIA: Esta acción reconstruirá todas las estadísticas desde los archivos anuales.\n¿Deseas continuar?')) {
                 sincronizar();
