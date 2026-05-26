@@ -73,6 +73,9 @@
         .toast-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 12px 24px; border-radius: 30px; z-index: 1000; animation: fadeOut 3s ease forwards; }
         @keyframes fadeOut { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
         @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } .stat-number { font-size: 24px; } th, td { font-size: 11px; padding: 6px 4px; } .btn-accion { padding: 3px 6px; font-size: 10px; } }
+        /* Estilos para datalist (autocompletado) */
+        input[list]::-webkit-calendar-picker-indicator { opacity: 0.6; cursor: pointer; }
+        .sugerencia-rapida { font-size: 11px; color: #6c757d; margin-top: 4px; }
     </style>
 </head>
 <body>
@@ -129,16 +132,20 @@
                         <form id="formReservista">
                             <div class="form-group">
                                 <label>📖 Libro (año que estás digitalizando):</label>
-                                <input type="text" id="libroReservista" placeholder="Ej: 1975" maxlength="4" required>
+                                <input type="text" id="libroReservista" placeholder="Ej: 1975" maxlength="4" required autocomplete="off" list="listaAniosSugeridos">
+                                <datalist id="listaAniosSugeridos"></datalist>
+                                <div class="sugerencia-rapida">💡 Aparecerán años que ya has usado antes</div>
                             </div>
                             <div class="form-group">
                                 <label>🏢 Unidad del reservista:</label>
-                                <input type="text" id="unidadRReservista" placeholder="Ej: 11 BRIGADA" required>
+                                <input type="text" id="unidadRReservista" placeholder="Ej: 11 BRIGADA" required autocomplete="off" list="listaUnidadesSugeridas">
+                                <datalist id="listaUnidadesSugeridas"></datalist>
+                                <div class="sugerencia-rapida">💡 Se sugieren unidades que usaste para ese año</div>
                             </div>
                             <div class="form-group">
                                 <label>🆔 Cédula(s) del reservista (separadas por coma):</label>
                                 <input type="text" id="cedulaRReservista" placeholder="Ej: 11526483, 12827266" required>
-                                <small style="color: #666;">Puedes escribir varias cédulas separadas por coma</small>
+                                <small style="color: #666;">Puedes escribir varias cédulas separadas por coma. Presiona ENTER para agregar rápidamente.</small>
                             </div>
                             <button type="submit">➕ AGREGAR RESERVISTA(S) AL LOTE</button>
                         </form>
@@ -248,8 +255,8 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        // ✅ NUEVA URL DEL APPS SCRIPT
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzXMzeFyQyJeFr8LDYVhRvTbiqqbVRKu45Wnw9S_5vUYpxX1OOA51jU8drPXdkzTiat/exec";
+        // ✅ URL DE TU APPS SCRIPT (la que me proporcionaste)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx0plkjWRmyaU9TuPyCZFjx0XnzetcTkeagACWzrVYojC5BcHTUlI546IN0WtZNtmuo/exec";
         
         const UNIDADES_BASE = [
             "11 BRIGADA", "12 BRIGADA", "13 BRIGADA", "14 BRIGADA",
@@ -268,6 +275,66 @@
         let datosAnalista = { cedula: "", unidad: "" };
         let unidadFiltroActual = "TODAS";
         let cedulaAnalistaActual = "";
+        
+        // Cache para autocompletado rápido
+        let cacheAniosAnalista = new Set();      // años que ya usó este analista
+        let cacheUnidadesPorAnio = new Map();    // año -> Set de unidades
+        
+        // ========== FUNCIONES DE AUTCOMPLETADO ==========
+        async function cargarHistorialAutocompletado(cedula) {
+            try {
+                const respuesta = await fetch(`${SCRIPT_URL}?historial_autocompletado=${encodeURIComponent(cedula)}`);
+                const datos = await respuesta.json();
+                if (datos.success && datos.historial) {
+                    cacheAniosAnalista.clear();
+                    cacheUnidadesPorAnio.clear();
+                    for (let item of datos.historial) {
+                        if (item.año) cacheAniosAnalista.add(item.año);
+                        if (item.año && item.unidad_r) {
+                            if (!cacheUnidadesPorAnio.has(item.año)) {
+                                cacheUnidadesPorAnio.set(item.año, new Set());
+                            }
+                            cacheUnidadesPorAnio.get(item.año).add(item.unidad_r);
+                        }
+                    }
+                    actualizarDatalistAnios();
+                }
+            } catch(e) {
+                console.log("Error cargando historial autocompletado:", e);
+            }
+        }
+        
+        function actualizarDatalistAnios() {
+            const datalist = document.getElementById('listaAniosSugeridos');
+            if (!datalist) return;
+            const añosArray = Array.from(cacheAniosAnalista).sort().reverse();
+            datalist.innerHTML = '';
+            añosArray.forEach(año => {
+                const option = document.createElement('option');
+                option.value = año;
+                datalist.appendChild(option);
+            });
+        }
+        
+        function actualizarDatalistUnidades(año) {
+            const datalist = document.getElementById('listaUnidadesSugeridas');
+            if (!datalist) return;
+            const unidades = cacheUnidadesPorAnio.get(año) || new Set();
+            const unidadesArray = Array.from(unidades).sort();
+            datalist.innerHTML = '';
+            unidadesArray.forEach(unidad => {
+                const option = document.createElement('option');
+                option.value = unidad;
+                datalist.appendChild(option);
+            });
+        }
+        
+        // Cuando el año cambia, actualizar sugerencias de unidades
+        function onAñoChange(año) {
+            if (año && año.length >= 2) {
+                actualizarDatalistUnidades(año);
+            }
+        }
         
         function mostrarToast(mensaje, esError = false) {
             const toast = document.createElement('div');
@@ -291,35 +358,24 @@
             return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
         }
         
-        // ============================================================
-        // FUNCIÓN sincronizar() ACTUALIZADA
-        // ============================================================
-        function sincronizar() {
+        async function sincronizar() {
             fetch(SCRIPT_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "text/plain;charset=utf-8"
-                },
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ tipo: "sincronizar" })
             })
             .then(async (r) => {
                 const text = await r.text();
-                console.log("Respuesta sincronización:", text);
-                mostrarToast('✅ Sincronización ejecutada. Revisa la consola para detalles.');
+                mostrarToast('✅ Sincronización ejecutada');
                 try {
                     const data = JSON.parse(text);
                     if (data.success) {
                         mostrarToast(`✅ Sincronización completada. Total: ${data.totalRegistros} registros`);
                         await cargarDatosDesdeNube();
                     }
-                } catch(e) {
-                    console.log("Respuesta no es JSON, pero la petición fue exitosa");
-                }
+                } catch(e) {}
             })
-            .catch((err) => {
-                console.error("Falla de conexión:", err);
-                mostrarToast(`❌ Error de conexión: ${err.message}`, true);
-            });
+            .catch((err) => { mostrarToast(`❌ Error de conexión: ${err.message}`, true); });
         }
         
         async function cargarDatosDesdeNube() {
@@ -327,9 +383,7 @@
             try {
                 if (loadingDiv) loadingDiv.style.display = 'block';
                 const respuesta = await fetch(SCRIPT_URL);
-                
                 if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
-                
                 const datos = await respuesta.json();
                 registrosReservistas = Array.isArray(datos.reservistas) ? datos.reservistas : [];
                 actualizarSelectFiltroUnidad();
@@ -339,7 +393,7 @@
             } catch(e) {
                 console.error('Error cargando datos:', e);
                 if (loadingDiv) {
-                    loadingDiv.innerHTML = '⚠️ Error de conexión. Verifica que el Apps Script esté publicado como "Cualquier usuario"';
+                    loadingDiv.innerHTML = '⚠️ Error de conexión. Verifica que el Apps Script esté publicado';
                     loadingDiv.style.color = '#dc3545';
                 }
                 mostrarToast('❌ Error de conexión: ' + e.message, true);
@@ -352,7 +406,6 @@
                 const datos = await respuesta.json();
                 return datos;
             } catch(e) {
-                console.error('Error:', e);
                 return { encontrado: false, error: e.toString() };
             }
         }
@@ -374,13 +427,14 @@
                             desde: r.desde
                         })
                     });
-                    
                     const resultado = await respuesta.json();
-                    if (!resultado.success) {
-                        throw new Error(resultado.error || 'Error al guardar');
-                    }
+                    if (!resultado.success) throw new Error(resultado.error || 'Error al guardar');
                 }
                 await cargarDatosDesdeNube();
+                // Actualizar cache de autocompletado con los nuevos datos
+                if (cedulaAnalistaActual) {
+                    await cargarHistorialAutocompletado(cedulaAnalistaActual);
+                }
                 return true;
             } catch(e) { 
                 console.error('Error guardando:', e);
@@ -395,16 +449,13 @@
                 const datos = await respuesta.json();
                 return datos;
             } catch(e) {
-                console.error('Error:', e);
                 return { success: false, totalGeneral: 0, registrosPorUnidad: [] };
             }
         }
         
         function obtenerUnidadesAnalistas() {
             const unidades = new Set();
-            registrosReservistas.forEach(r => {
-                if (r.unidad_analista) unidades.add(r.unidad_analista);
-            });
+            registrosReservistas.forEach(r => { if (r.unidad_analista) unidades.add(r.unidad_analista); });
             return Array.from(unidades).sort();
         }
         
@@ -420,9 +471,7 @@
                 opt.textContent = u;
                 select.appendChild(opt);
             });
-            if (valorActual && (valorActual === "TODAS" || unidades.includes(valorActual))) {
-                select.value = valorActual;
-            }
+            if (valorActual && (valorActual === "TODAS" || unidades.includes(valorActual))) select.value = valorActual;
         }
         
         function obtenerRegistrosFiltrados() {
@@ -446,20 +495,20 @@
             if (tbody) {
                 const mostrados = [...registrosFiltrados].reverse();
                 if (mostrados.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</div></div></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center">⚠️ No hay registros</td></tr>';
                 } else {
                     tbody.innerHTML = mostrados.map((r, i) => {
                         const indiceOriginal = registrosReservistas.indexOf(r);
                         return `<tr>
-                            <td>${i+1}</div>
-                            <td>${formatearFechaVisible(r.timestamp)}</div>
-                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></div>
-                            <td>${r.unidad_analista || 'N/A'} </div>
-                            <td>${r.libro || 'N/A'} </div>
-                            <td>${r.unidad_r || 'N/A'} </div>
-                            <td><strong>${r.cedula_r || 'N/A'}</strong></div>
-                            <td>${r.desde || 'N/A'} </div>
-                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></div>
+                            <td>${i+1}</td>
+                            <td>${formatearFechaVisible(r.timestamp)}</td>
+                            <td><span class="badge-analista">${r.cedula_analista || 'N/A'}</span></td>
+                            <td>${r.unidad_analista || 'N/A'}</td>
+                            <td>${r.libro || 'N/A'}</td>
+                            <td>${r.unidad_r || 'N/A'}</td>
+                            <td><strong>${r.cedula_r || 'N/A'}</strong></td>
+                            <td>${r.desde || 'N/A'}</td>
+                            <td><button class="btn-accion btn-eliminar" onclick="eliminarReservista(${indiceOriginal})">🗑️</button></td>
                         </tr>`;
                     }).join('');
                 }
@@ -496,15 +545,11 @@
         function actualizarSelectUnidad(selectId, incluirOtra = true) {
             const select = document.getElementById(selectId);
             if (!select) return;
-            
             let unidades = [...UNIDADES_BASE];
             registrosReservistas.forEach(r => {
-                if (r.unidad_analista && !unidades.includes(r.unidad_analista)) {
-                    unidades.push(r.unidad_analista);
-                }
+                if (r.unidad_analista && !unidades.includes(r.unidad_analista)) unidades.push(r.unidad_analista);
             });
             unidades = [...new Set(unidades)].sort();
-            
             const valorActual = select.value;
             select.innerHTML = '<option value="">-- Seleccione --</option>';
             unidades.forEach(u => {
@@ -522,7 +567,7 @@
                     campoNueva.classList.add('visible');
                 } else {
                     campoNueva.classList.remove('visible');
-                    document.getElementById('nuevaUnidadPrincipal').value = '';
+                    if (document.getElementById('nuevaUnidadPrincipal')) document.getElementById('nuevaUnidadPrincipal').value = '';
                 }
             }
         }
@@ -565,11 +610,59 @@
             if (select) select.value = "TODAS";
             actualizarPanelOperador();
         }
-
-        document.getElementById('btnAnalista').addEventListener('click', () => {
+        
+        // Recuperar sesión del analista desde localStorage
+        function recuperarSesionAnalista() {
+            const saved = localStorage.getItem('sesionAnalistaRapida');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.cedula && data.unidad && data.loteActual && Array.isArray(data.loteActual)) {
+                        datosAnalista = { cedula: data.cedula, unidad: data.unidad };
+                        cedulaAnalistaActual = data.cedula;
+                        loteActual = data.loteActual;
+                        return true;
+                    }
+                } catch(e) {}
+            }
+            return false;
+        }
+        
+        function guardarSesionAnalista() {
+            localStorage.setItem('sesionAnalistaRapida', JSON.stringify({
+                cedula: datosAnalista.cedula,
+                unidad: datosAnalista.unidad,
+                loteActual: loteActual
+            }));
+        }
+        
+        // Configurar eventos
+        document.getElementById('btnAnalista').addEventListener('click', async () => {
             document.getElementById('pantallaInicio').style.display = 'none';
             document.getElementById('panelAnalista').classList.add('panel-activo');
+            await cargarDatosDesdeNube();
             actualizarSelectUnidad('unidadAnalistaPrincipal', true);
+            
+            // Intentar recuperar sesión
+            if (recuperarSesionAnalista()) {
+                document.getElementById('mostrarCedulaAnalista').innerText = datosAnalista.cedula;
+                document.getElementById('mostrarUnidadAnalista').innerText = datosAnalista.unidad;
+                document.getElementById('formularioAnalista').style.display = 'none';
+                document.getElementById('formularioCarga').style.display = 'block';
+                actualizarResumenLote();
+                document.getElementById('misRegistros').style.display = 'block';
+                const misRegistros = await cargarMisRegistrosResumen(cedulaAnalistaActual);
+                if (misRegistros.success) {
+                    document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
+                    const tbody = document.getElementById('tbodyMisRegistros');
+                    if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
+                        tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `<tr><td><strong>${r.año}</strong></td><td>${r.unidad_r}</td><td>${r.total} cédulas</td></tr>`).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</td></tr>';
+                    }
+                }
+                await cargarHistorialAutocompletado(cedulaAnalistaActual);
+            }
         });
 
         document.getElementById('unidadAnalistaPrincipal').addEventListener('change', (e) => {
@@ -579,7 +672,7 @@
                 document.getElementById('nuevaUnidadPrincipal').required = true;
             } else {
                 campoNueva.classList.remove('visible');
-                document.getElementById('nuevaUnidadPrincipal').required = false;
+                if (document.getElementById('nuevaUnidadPrincipal')) document.getElementById('nuevaUnidadPrincipal').required = false;
             }
         });
 
@@ -595,13 +688,11 @@
                 }
             }
             const cedula = document.getElementById('cedulaAnalistaPrincipal').value.trim();
-            
             if (!cedula || !unidad) {
                 document.getElementById('mensajeAnalistaSesion').innerHTML = '<div class="mensaje-error">❌ Complete sus datos</div>';
                 setTimeout(() => document.getElementById('mensajeAnalistaSesion').innerHTML = '', 2000);
                 return;
             }
-            
             if (!/^\d+$/.test(cedula)) {
                 document.getElementById('mensajeAnalistaSesion').innerHTML = '<div class="mensaje-error">❌ La cédula debe contener solo números</div>';
                 setTimeout(() => document.getElementById('mensajeAnalistaSesion').innerHTML = '', 2000);
@@ -610,36 +701,51 @@
             
             datosAnalista = { cedula, unidad };
             cedulaAnalistaActual = datosAnalista.cedula;
-
+            loteActual = []; // Nuevo inicio, lote vacío
+            guardarSesionAnalista();
+            
             document.getElementById('mostrarCedulaAnalista').innerText = datosAnalista.cedula;
             document.getElementById('mostrarUnidadAnalista').innerText = datosAnalista.unidad;
-            
             document.getElementById('totalGeneralAnalista').innerText = 'Cargando...';
             document.getElementById('misRegistros').style.display = 'block';
+            
+            // Cargar historial para autocompletado
+            await cargarHistorialAutocompletado(cedulaAnalistaActual);
             
             const misRegistros = await cargarMisRegistrosResumen(cedulaAnalistaActual);
             if (misRegistros.success) {
                 document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
                 const tbody = document.getElementById('tbodyMisRegistros');
                 if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
-                    tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
-                        <tr>
-                            <td><strong>${r.año}</strong></td>
-                            <td>${r.unidad_r}</div>
-                            <td>${r.total} cédulas</div>
-                        </tr>
-                    `).join('');
+                    tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `<tr><td><strong>${r.año}</strong></td><td>${r.unidad_r}</td><td>${r.total} cédulas</td></tr>`).join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</td></tr>';
                 }
-            } else {
-                document.getElementById('totalGeneralAnalista').innerText = '0';
-                document.getElementById('tbodyMisRegistros').innerHTML = '<tr><td colspan="3" style="text-align:center">Error al cargar</div></div></tr>';
             }
             
             document.getElementById('formularioAnalista').style.display = 'none';
             document.getElementById('formularioCarga').style.display = 'block';
+            actualizarResumenLote();
         });
+        
+        // Evento ENTER en el campo de cédulas para agregar rápido
+        const cedulaInput = document.getElementById('cedulaRReservista');
+        if (cedulaInput) {
+            cedulaInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const submitBtn = document.querySelector('#formReservista button[type="submit"]');
+                    if (submitBtn) submitBtn.click();
+                }
+            });
+        }
+        
+        // Autocompletado al cambiar año
+        const libroInput = document.getElementById('libroReservista');
+        if (libroInput) {
+            libroInput.addEventListener('input', (e) => onAñoChange(e.target.value));
+            libroInput.addEventListener('change', (e) => onAñoChange(e.target.value));
+        }
 
         document.getElementById('formReservista').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -691,6 +797,8 @@
             
             document.getElementById('cedulaRReservista').value = '';
             actualizarResumenLote();
+            guardarSesionAnalista(); // guardar progreso
+            cedulaInput.focus(); // mantener foco para seguir agregando rápido
         });
 
         document.getElementById('btnConfirmarLote').addEventListener('click', async () => {
@@ -703,21 +811,17 @@
                 mostrarToast('✅ Lote enviado exitosamente');
                 loteActual = [];
                 actualizarResumenLote();
+                guardarSesionAnalista();
                 
                 const misRegistros = await cargarMisRegistrosResumen(cedulaAnalistaActual);
                 if (misRegistros.success) {
                     document.getElementById('totalGeneralAnalista').innerText = misRegistros.totalGeneral;
                     const tbody = document.getElementById('tbodyMisRegistros');
                     if (misRegistros.registrosPorUnidad && misRegistros.registrosPorUnidad.length > 0) {
-                        tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `
-                            <tr>
-                                <td><strong>${r.año}</strong></td>
-                                <td>${r.unidad_r}</div>
-                                <td>${r.total} cédulas</div>
-                            </tr>
-                        `).join('');
+                        tbody.innerHTML = misRegistros.registrosPorUnidad.map(r => `<tr><td><strong>${r.año}</strong></td><td>${r.unidad_r}</td><td>${r.total} cédulas</td></tr>`).join('');
                     }
                 }
+                await cargarHistorialAutocompletado(cedulaAnalistaActual);
             } else {
                 mostrarToast('❌ Error al enviar el lote', true);
             }
@@ -729,6 +833,7 @@
             if (confirm('¿Vaciar el lote actual?')) {
                 loteActual = [];
                 actualizarResumenLote();
+                guardarSesionAnalista();
             }
         });
 
@@ -777,7 +882,10 @@
             }
         });
 
-        document.getElementById('volverAnalista').addEventListener('click', () => { location.reload(); });
+        document.getElementById('volverAnalista').addEventListener('click', () => { 
+            localStorage.removeItem('sesionAnalistaRapida');
+            location.reload(); 
+        });
         document.getElementById('volverOperador').addEventListener('click', () => { location.reload(); });
         
         document.getElementById('btnGenerarInforme').addEventListener('click', () => {
@@ -799,7 +907,6 @@
             win.document.close();
         });
 
-        // Evento del botón Sincronizar
         document.getElementById('btnSincronizar').addEventListener('click', () => {
             if (confirm('⚠️ ADVERTENCIA: Esta acción reconstruirá todas las estadísticas desde los archivos anuales.\n¿Deseas continuar?')) {
                 sincronizar();
