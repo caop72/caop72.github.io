@@ -248,7 +248,6 @@
 
     <script>
         const CLAVE_OPERADOR = "R2026";
-        // ✅ NUEVA URL DEL APPS SCRIPT ACTUALIZADA
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzYPvc5hcepFR1n-7wUoM5_Y_O2W0tFmPA381gSRpaeJQbZ-Ztw8Ew7u7JDnSd_efrB/exec";
         
         const UNIDADES_BASE = [
@@ -289,6 +288,37 @@
             if (!fechaISO) return '---';
             const d = new Date(fechaISO);
             return `${pad2(d.getDate())}/${pad2(d.getMonth()+1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+        }
+        
+        // ============================================================
+        // FUNCIÓN sincronizar() AGREGADA
+        // ============================================================
+        function sincronizar() {
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tipo: "sincronizar" })
+            })
+            .then(async (r) => {
+                const text = await r.text();
+                console.log("Respuesta sincronización:", text);
+                try {
+                    const data = JSON.parse(text);
+                    if (data.success) {
+                        mostrarToast(`✅ Sincronización completada. Total: ${data.totalRegistros} registros`);
+                        await cargarDatosDesdeNube();
+                    } else {
+                        mostrarToast(`❌ Error: ${data.error || 'Error desconocido'}`, true);
+                    }
+                } catch(e) {
+                    console.error("Error parsing JSON:", e);
+                    mostrarToast(`❌ Respuesta inválida del servidor`, true);
+                }
+            })
+            .catch((err) => {
+                console.error("Falla de conexión:", err);
+                mostrarToast(`❌ Error de conexión: ${err.message}`, true);
+            });
         }
         
         async function cargarDatosDesdeNube() {
@@ -599,7 +629,7 @@
                         </tr>
                     `).join('');
                 } else {
-                    tbody.innerHTML = '</table><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No tiene registros aún</div></div></tr>';
                 }
             } else {
                 document.getElementById('totalGeneralAnalista').innerText = '0';
@@ -768,36 +798,10 @@
             win.document.close();
         });
 
-        document.getElementById('btnSincronizar').addEventListener('click', async () => {
+        // Evento del botón Sincronizar - usa la nueva función sincronizar()
+        document.getElementById('btnSincronizar').addEventListener('click', () => {
             if (confirm('⚠️ ADVERTENCIA: Esta acción reconstruirá todas las estadísticas desde los archivos anuales.\n¿Deseas continuar?')) {
-                const btn = document.getElementById('btnSincronizar');
-                btn.disabled = true;
-                btn.innerText = '⏳ SINCRONIZANDO...';
-                
-                try {
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ tipo: "sincronizar" })
-                    });
-                    
-                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                    
-                    const resultado = await response.json();
-                    
-                    if (resultado.success) {
-                        mostrarToast(`✅ Sincronización completada. Total: ${resultado.totalRegistros} registros`);
-                        await cargarDatosDesdeNube();
-                    } else {
-                        mostrarToast(`❌ Error: ${resultado.error || 'Error desconocido'}`, true);
-                    }
-                } catch(e) {
-                    console.error('Error en sincronización:', e);
-                    mostrarToast(`❌ Error de conexión: ${e.message}`, true);
-                }
-                
-                btn.disabled = false;
-                btn.innerText = '🔄 SINCRONIZAR ESTADÍSTICAS';
+                sincronizar();
             }
         });
     </script>
